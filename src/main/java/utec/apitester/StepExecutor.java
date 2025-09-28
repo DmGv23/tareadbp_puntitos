@@ -1,5 +1,7 @@
 package utec.apitester;
 
+import utec.apitester.utils.HttpCaller;
+
 import java.util.HashMap;
 
 public class StepExecutor {

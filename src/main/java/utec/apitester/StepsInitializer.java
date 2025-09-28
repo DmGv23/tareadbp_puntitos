@@ -1,6 +1,7 @@
 package utec.apitester;
 
 import org.json.JSONObject;
+import utec.apitester.utils.MockUtils;
 
 import java.util.Arrays;
 import java.util.HashMap;
@@ -34,6 +35,16 @@ public class StepsInitializer {
         return newGroup;
     }
 
+    private Function<JSONObject, Exception> getExpectOneFieldLambda(String fieldName) {
+        return (jo) -> {
+            if (jo.get(fieldName) == null) {
+                return new Exception("Expected Response: { id: \"new id\" }");
+            }
+
+            return null;
+        };
+    }
+
     private void addStep(String groupName, Step step) {
         var group = stepGroups.get(groupName);
 
@@ -47,7 +58,7 @@ public class StepsInitializer {
 
     private void addGroupCreateFlight() {
         var urlPath = "/flights/create";
-        var group = addGroup("CREATE FLIGHT", 0.2, true);
+        var group = addGroup("CREATE_FLIGHT", 0.2, true);
 
         addStep(group.getName(),
                 Step.create("MANDATORY_FIELDS",
@@ -100,9 +111,8 @@ public class StepsInitializer {
                                             MockUtils.mockFlight("American Airlines", "AA448", 5, 900, 5, 1400)
                                                      .toString()
                             ),
-                            new StepOptions(true, false, true),
-                            new StepExpected(201)
-
+                            new StepOptions(true, false, true, true),
+                            new StepExpected(201, getExpectOneFieldLambda("id"))
                 )
         );
 
@@ -115,8 +125,8 @@ public class StepsInitializer {
                                             MockUtils.mockFlight("American Airlines", "AA754", 3, 700, 3, 1400)
                                                      .toString()
                             ),
-                            new StepOptions(true, false, true),
-                            new StepExpected(201)
+                            new StepOptions(true, false, true, true),
+                            new StepExpected(201, getExpectOneFieldLambda("id"))
 
                 )
         );
@@ -142,8 +152,8 @@ public class StepsInitializer {
                             "Test Successful Call",
                             "Test if the flight can be created. Expected Response: { id: \"new id\" }",
                             new StepRequest("POST", urlPath, jo.toString()),
-                            new StepOptions(true, false, false),
-                            new StepExpected(201)
+                            new StepOptions(true, false, false, true),
+                            new StepExpected(201, getExpectOneFieldLambda("id"))
 
                 )
         );
@@ -154,34 +164,16 @@ public class StepsInitializer {
                             "Test Successful Call",
                             "Test if the flight can be created. Expected Response: { id: \"new id\" }",
                             new StepRequest("POST", urlPath, jo.toString()),
-                            new StepOptions(true, false, false),
-                            new StepExpected(201)
+                            new StepOptions(true, false, false, true),
+                            new StepExpected(201, getExpectOneFieldLambda("id"))
 
                 )
         );
-
-        //        addStep(group.getName(),
-        //                Step.create("TEST_ADD_MANY",
-        //                            "Test Flight Number Unique",
-        //                            "Test if the flight number is unique",
-        //                            new StepRequest("POST",urlPath, MockUtils.mockFlight("AA448").toString()),
-        //                            new StepOptions(false, false, false),
-        //                            new StepExpected(400)
-        //
-        //                )
-        //        );
-    }
-
-    private JSONObject mockGoodUser(String email) {
-        return new JSONObject().put("firstName", "John")
-                               .put("lastName", "Doe")
-                               .put("email", email)
-                               .put("password", "1234ABCD");
     }
 
     private void addGroupRegisterUser() {
         var urlPath = "/users/register";
-        var group = addGroup("REGISTER USER", 0.2, true);
+        var group = addGroup("REGISTER_USER", 0.2, true);
 
         addStep(group.getName(),
                 Step.create("MANDATORY_FIELDS",
@@ -200,7 +192,8 @@ public class StepsInitializer {
                             new StepRequest("POST",
                                             urlPath,
                                             Stream.of("_", "-", "$", "abc@def", "@def", "abc")
-                                                  .map((x) -> mockGoodUser(x).toString())
+                                                  .map((email) -> MockUtils.mockUser("John", "Doe", email, "1")
+                                                                           .toString())
                                                   .toList()
                             ),
                             new StepOptions(true, false, false),
@@ -217,7 +210,7 @@ public class StepsInitializer {
                                 String.format("Test if the %s name format is validated", fieldPrefix),
                                 new StepRequest("POST", urlPath, Stream.of("", "a", "$", "-", "1").map((x) -> {
                                     var fieldName = fieldPrefix + "Name";
-                                    var jo = mockGoodUser(x);
+                                    var jo = MockUtils.mockUser("X", "X", "johndoe@gmail.com", "1");
                                     jo.put(fieldName, x);
                                     return jo.toString();
                                 }).toList()
@@ -235,11 +228,11 @@ public class StepsInitializer {
                             new StepRequest("POST",
                                             urlPath,
                                             Stream.of("", "a", "aaaaaaaa", "aaaaaaaaa", "12345678", "123456789")
-                                                  .map((x) -> {
-                                                      var jo = mockGoodUser(x);
-                                                      jo.put("password", x);
-                                                      return jo.toString();
-                                                  })
+                                                  .map((pwd) -> MockUtils.mockUser("John",
+                                                                                   "Doe",
+                                                                                   "johndoe@gmail.com",
+                                                                                   pwd
+                                                  ).toString())
                                                   .toList()
                             ),
                             new StepOptions(true, false, false),
@@ -249,12 +242,15 @@ public class StepsInitializer {
 
         addStep(group.getName(),
                 Step.create("TEST_SUCCESS_JOHN_DOE",
-                            "Test Successful Call",
-                            "Test if the user can be registered. Expected Response: { id: \"new id\" }",
-                            new StepRequest("POST", urlPath, mockGoodUser("johndoe@gmail.com").toString()),
-                            new StepOptions(true, false, true),
-                            new StepExpected(201)
-
+                            "Test Successful Register John Doe",
+                            "Test if the user can be registered",
+                            new StepRequest("POST",
+                                            urlPath,
+                                            MockUtils.mockUser("John", "Doe", "johndoe@gmail.com", "1234ABCD")
+                                                     .toString()
+                            ),
+                            new StepOptions(true, false, true, true),
+                            new StepExpected(201, getExpectOneFieldLambda("id"))
                 )
         );
 
@@ -262,7 +258,11 @@ public class StepsInitializer {
                 Step.create("TEST_UNIQUE_JOHN_DOE",
                             "Test Email Unique",
                             "Test if the email is unique",
-                            new StepRequest("POST", urlPath, mockGoodUser("johndoe@gmail.com").toString()),
+                            new StepRequest("POST",
+                                            urlPath,
+                                            MockUtils.mockUser("John", "Doe", "johndoe@gmail.com", "1234ABCD")
+                                                     .toString()
+                            ),
                             new StepOptions(true, false, false),
                             new StepExpected(400)
 
@@ -272,7 +272,7 @@ public class StepsInitializer {
 
     private void addGroupAuthToken() {
         var urlPath = "/auth/login";
-        var group = addGroup("AUTH LOGIN", 0.2, true);
+        var group = addGroup("AUTH_LOGIN", 0.2, true);
 
         addStep(group.getName(),
                 Step.create("MANDATORY_FIELDS",
@@ -331,21 +331,14 @@ public class StepsInitializer {
                                                             .toString()
                             ),
                             new StepOptions(true, false, true, true),
-                            new StepExpected(200, (jo) -> {
-                                var token = jo.getString("token");
-                                return token == null ? new Exception("""
-                                                                             Expected Result:
-                                                                               { token, ... },
-                                                                             """) : null;
-                            }
-                            )
+                            new StepExpected(200, getExpectOneFieldLambda("token"))
                 )
         );
     }
 
     private void addGroupSearchFlight() {
         var urlPath = "/flights/search";
-        var group = addGroup("SEARCH FLIGHT", 0.4, true);
+        var group = addGroup("SEARCH_FLIGHT", 0.4, true);
 
         addStep(group.getName(),
                 Step.create("NUMBER_EXACT_AA448",
@@ -433,6 +426,29 @@ public class StepsInitializer {
                             new StepRequest("GET", urlPath + "?airlineName=American"),
                             new StepOptions(true, true, true),
                             new StepExpected(200, validator)
+                )
+        );
+    }
+
+    private void addGroupBookFlight() {
+        var urlPath = "/flights/book";
+
+        var group = addGroup("BOOK_FLIGHT", 0.5, true);
+
+        addStep(group.getName(),
+                Step.create("TEST_SUCCESS_BOOK_FLIGHT_AA448",
+                            "Test successful booking on flight AA448 by John Doe",
+                            "Test successful booking on flight AA448 by John Doe",
+                            new StepRequest("POST",
+                                            urlPath,
+                                            (responses) -> new JSONObject().put("flightId",
+                                                                                responses.get("TEST_SUCCESS_AA448")
+                                                                                         .getResponseJSON()
+                                                                                         .getString("id")
+                                            )
+                            ),
+                            new StepOptions(true, true, true),
+                            new StepExpected(200, getExpectOneFieldLambda("id"))
                 )
         );
     }

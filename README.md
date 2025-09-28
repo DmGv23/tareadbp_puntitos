@@ -77,7 +77,7 @@ Must-Have (+0.2)
 - Email must be a valid email address
 - First Name must be at least 1 alpha upper case character (A-Z)
 - Last Name must be at least 1 alpha upper case character (A-Z)
-- Password must be at least 8 letters and numbers.
+- Password must be at least 8 characters long, with at least one letter and one number.
 
 3. (Must-Have) The customer then must acquire an authentication token. (+0.2)
 
@@ -144,6 +144,7 @@ Must-Have (+0.5)
 
 - Mandatory Fields: Customer, Flight, Booking Date, Customer First Name, Customer Last Name
 - The flights cannot be oversold.
+- There must be a GET endpoint by the bookingId, that must return all the data that was registered before.
 
 Nice-To-Have (+0.2)
 

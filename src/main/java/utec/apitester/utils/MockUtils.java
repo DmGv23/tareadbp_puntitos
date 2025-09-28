@@ -1,4 +1,4 @@
-package utec.apitester;
+package utec.apitester.utils;
 
 import org.json.JSONObject;
 
@@ -16,4 +16,10 @@ public class MockUtils {
                                .put("availableSeats", 3);
     }
 
+    public static JSONObject mockUser(String firstName, String lastName, String email, String password) {
+        return new JSONObject().put("firstName", firstName)
+                               .put("lastName", lastName)
+                               .put("email", email)
+                               .put("password", password);
+    }
 }

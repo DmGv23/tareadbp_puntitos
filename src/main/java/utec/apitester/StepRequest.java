@@ -1,12 +1,17 @@
 package utec.apitester;
 
+import org.json.JSONObject;
+
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.function.Function;
 
 public class StepRequest {
     private final String method;
     private final String path;
     private final List<String> bodies;
+    private Function<HashMap<String, StepResponse>, JSONObject> bodyFunction;
 
     public StepRequest(String method, String path) {
         // this means it will always have at least one item
@@ -28,12 +33,13 @@ public class StepRequest {
         this.bodies = bodies;
     }
 
-    public String getPath() {
-        return path;
+    public StepRequest(String method, String path, Function<HashMap<String, StepResponse>, JSONObject> bodyFunction) {
+        this(method, path, "");
+        this.bodyFunction = bodyFunction;
     }
 
-    public String getBody() {
-        return bodies.getFirst();
+    public String getPath() {
+        return path;
     }
 
     public List<String> getBodies() {

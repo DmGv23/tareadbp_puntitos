@@ -1,4 +1,4 @@
-package utec.apitester;
+package utec.apitester.utils;
 
 import java.util.Calendar;
 import java.util.Date;
