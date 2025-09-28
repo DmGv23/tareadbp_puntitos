@@ -3,10 +3,7 @@ package utec.apitester;
 import org.json.JSONObject;
 import utec.apitester.utils.MockUtils;
 
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -21,6 +18,7 @@ public class StepsInitializer {
         addGroupRegisterUser();
         addGroupAuthToken();
         addGroupSearchFlight();
+        addGroupBookFlight();
         return stepGroups;
     }
 
@@ -431,7 +429,8 @@ public class StepsInitializer {
     }
 
     private void addGroupBookFlight() {
-        var urlPath = "/flights/book";
+        var bookPath = "/flights/book";
+        var readPath = "/flights/book";
 
         var group = addGroup("BOOK_FLIGHT", 0.5, true);
 
@@ -440,15 +439,43 @@ public class StepsInitializer {
                             "Test successful booking on flight AA448 by John Doe",
                             "Test successful booking on flight AA448 by John Doe",
                             new StepRequest("POST",
-                                            urlPath,
+                                            bookPath,
                                             (responses) -> new JSONObject().put("flightId",
                                                                                 responses.get("TEST_SUCCESS_AA448")
                                                                                          .getResponseJSON()
                                                                                          .getString("id")
                                             )
                             ),
-                            new StepOptions(true, true, true),
+                            new StepOptions(true, true, true, true),
                             new StepExpected(200, getExpectOneFieldLambda("id"))
+                )
+        );
+
+        addStep(group.getName(),
+                Step.create("READ_SUCCESS_BOOK_FLIGHT_AA448",
+                            "Read successful booking on flight AA448 by John Doe",
+                            "Read successful booking on flight AA448 by John Doe",
+                            new StepRequest("GET",
+                                            (responses) -> "/flights/book/" + responses.get(
+                                                    "TEST_SUCCESS_BOOK_FLIGHT_AA448").getResponseJSON().getString("id"),
+                                            ""
+                            ),
+                            new StepOptions(true, true, true),
+                            new StepExpected(200, (jo) -> {
+                                if (Stream.of(jo.get("id"),
+                                              jo.get("bookingDate"),
+                                              jo.get("flightId"),
+                                              jo.get("customerId"),
+                                              jo.get("customerFirstName"),
+                                              jo.get("customerLastName")
+                                ).anyMatch(Objects::isNull)) {
+                                    return new Exception(
+                                            "Expected Result: { id, bookingDate, flightId, customerId, customerFirstName, customerLastName }");
+                                }
+
+                                return null;
+                            }
+                            )
                 )
         );
     }

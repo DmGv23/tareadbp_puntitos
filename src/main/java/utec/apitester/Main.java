@@ -129,7 +129,7 @@ public class Main {
                           stepGroup.getStepFullTitle(step),
                           step.getDescription(),
                           step.getRequest().getMethod(),
-                          step.getRequest().getPath(),
+                          stepResponse.getRequestPath(),
                           // show the last request sent
                           stepResponse.getRequestBody(),
                           // show the last response received

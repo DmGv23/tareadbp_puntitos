@@ -2,7 +2,9 @@ package utec.apitester;
 
 import utec.apitester.utils.HttpCaller;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 
 public class StepExecutor {
     private final String baseUrl;
@@ -17,17 +19,33 @@ public class StepExecutor {
         var stepResponse = new StepResponse();
         stepResponse.setSuccess();
 
+        String requestPath;
+        if (step.getRequest().getPathFunction() != null) {
+            requestPath = step.getRequest().getPathFunction().apply(responses);
+        } else {
+            requestPath = step.getRequest().getPath();
+        }
+
+        List<String> bodies;
+        if (step.getRequest().getBodyFunction() != null) {
+            var jo = step.getRequest().getBodyFunction().apply(responses);
+            bodies = Arrays.asList(jo.toString());
+        } else {
+            bodies = step.getRequest().getBodies();
+        }
+
         // NOTE: request will have at least one body (GET will have it empty)
-        for (String body : step.getRequest().getBodies()) {
+        for (String body : bodies) {
             if (step.getOptions().isProtected()) {
                 var loginResponse = responses.get("LOGIN_SUCCESS");
                 var token = loginResponse.getResponseJSON().getString("token");
                 caller.setBearerToken(token);
             }
 
-            var httpResponse = caller.httpAny(step.getRequest().getMethod(), step.getRequest().getPath(), body);
+            var httpResponse = caller.httpAny(step.getRequest().getMethod(), requestPath, body);
 
             // write the last information executed
+            stepResponse.setRequestPath(requestPath);
             stepResponse.setRequestBody(body);
             stepResponse.setResponseString(httpResponse.body());
             stepResponse.setResponseStatus(httpResponse.statusCode());

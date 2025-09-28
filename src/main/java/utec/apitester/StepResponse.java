@@ -10,6 +10,7 @@ public class StepResponse {
     private JSONObject responseJSON;
     private String responseString;
     private Integer responseStatus;
+    private String requestPath;
 
     public String getRequestBody() {
         return requestBody;
@@ -62,5 +63,13 @@ public class StepResponse {
 
     public void setResponseStatus(Integer responseStatus) {
         this.responseStatus = responseStatus;
+    }
+
+    public String getRequestPath() {
+        return requestPath;
+    }
+
+    public void setRequestPath(String requestPath) {
+        this.requestPath = requestPath;
     }
 }

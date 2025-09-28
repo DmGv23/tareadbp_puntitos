@@ -11,6 +11,7 @@ public class StepRequest {
     private final String method;
     private final String path;
     private final List<String> bodies;
+    private Function<HashMap<String, StepResponse>, String> pathFunction;
     private Function<HashMap<String, StepResponse>, JSONObject> bodyFunction;
 
     public StepRequest(String method, String path) {
@@ -38,6 +39,18 @@ public class StepRequest {
         this.bodyFunction = bodyFunction;
     }
 
+    public StepRequest(String method, Function<HashMap<String, StepResponse>, String> pathFunction, String body) {
+        this(method, "", body);
+        this.pathFunction = pathFunction;
+    }
+
+    public StepRequest(String method, Function<HashMap<String, StepResponse>, String> pathFunction,
+                       Function<HashMap<String, StepResponse>, JSONObject> bodyFunction) {
+        this(method, "", "");
+        this.pathFunction = pathFunction;
+        this.bodyFunction = bodyFunction;
+    }
+
     public String getPath() {
         return path;
     }
@@ -48,5 +61,13 @@ public class StepRequest {
 
     public String getMethod() {
         return method;
+    }
+
+    public Function<HashMap<String, StepResponse>, JSONObject> getBodyFunction() {
+        return bodyFunction;
+    }
+
+    public Function<HashMap<String, StepResponse>, String> getPathFunction() {
+        return pathFunction;
     }
 }
