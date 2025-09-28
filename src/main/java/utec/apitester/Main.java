@@ -26,6 +26,7 @@ public class Main {
         caller.httpAny("DELETE", "/cleanup", "");
         logger.info("Cleaned");
 
+        int totalGroups = 0;
         int totalSuccess = 0;
         int totalFailure = 0;
         var executor = new StepExecutor(baseUrl);
@@ -45,6 +46,8 @@ public class Main {
                 System.out.println("====================================");
                 System.out.printf("Group: %s\n", stepGroup.getName());
             }
+
+            totalGroups++;
 
             // begin steps
             for (Map.Entry<String, Step> entryStep : stepGroup.getSteps().entrySet()) {
@@ -101,6 +104,7 @@ public class Main {
         System.out.println("====================================");
         System.out.println("========== GRAND TOTAL =============");
         System.out.println("====================================");
+        System.out.printf("  Total Groups: %d\n", totalGroups);
         System.out.printf("  Total Succeeded: %d of %d\n", totalSuccess, totalSuccess + totalFailure);
         System.out.printf("  FINAL SCORE: %f\n", finalScore);
         System.out.println("====================================");
