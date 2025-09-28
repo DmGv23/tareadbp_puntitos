@@ -1,5 +1,7 @@
 package utec.apitester;
 
+import java.util.HashMap;
+
 public class StepExecutor {
     private final String baseUrl;
 
@@ -7,7 +9,7 @@ public class StepExecutor {
         this.baseUrl = baseUrl;
     }
 
-    public StepResponse execute(Step step) throws Exception {
+    public StepResponse execute(Step step, HashMap<String, StepResponse> responses) throws Exception {
         var caller = new HttpCaller(baseUrl);
 
         var stepResponse = new StepResponse();
@@ -15,6 +17,12 @@ public class StepExecutor {
 
         // NOTE: request will have at least one body (GET will have it empty)
         for (String body : step.getRequest().getBodies()) {
+            if (step.getOptions().isProtected()) {
+                var loginResponse = responses.get("LOGIN_SUCCESS");
+                var token = loginResponse.getResponseJSON().getString("token");
+                caller.setBearerToken(token);
+            }
+
             var httpResponse = caller.httpAny(step.getRequest().getMethod(), step.getRequest().getPath(), body);
 
             // write the last information executed
@@ -28,10 +36,9 @@ public class StepExecutor {
                                                                           httpResponse.statusCode()
                 ));
             } else if (stepResponse.getResponseJSON() != null && step.getExpected().validator() != null) {
-                try {
-                    step.getExpected().validator().accept(stepResponse.getResponseJSON());
-                } catch (Exception e) {
-                    stepResponse.setException(e);
+                var exception = step.getExpected().validator().apply(stepResponse.getResponseJSON());
+                if (exception != null) {
+                    stepResponse.setException(exception);
                     break;
                 }
             }

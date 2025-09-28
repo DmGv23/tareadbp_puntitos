@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.function.Function;
 import java.util.stream.Stream;
 
 public class StepsInitializer {
@@ -18,6 +19,7 @@ public class StepsInitializer {
         addGroupCreateFlight();
         addGroupRegisterUser();
         addGroupAuthToken();
+        addGroupSearchFlight();
         return stepGroups;
     }
 
@@ -43,14 +45,6 @@ public class StepsInitializer {
         group.addStep(step);
     }
 
-    private JSONObject mockGoodFlight(String flightNumber) {
-        return new JSONObject().put("airlineName", "American Airlines")
-                               .put("flightNumber", flightNumber)
-                               .put("estDepartureTime", DateUtils.newDateFromToday(5, 900))
-                               .put("estArrivalTime", DateUtils.newDateFromToday(5, 1400))
-                               .put("availableSeats", 50);
-    }
-
     private void addGroupCreateFlight() {
         var urlPath = "/flights/create";
         var group = addGroup("CREATE FLIGHT", 0.2, true);
@@ -72,7 +66,7 @@ public class StepsInitializer {
                             new StepRequest("POST",
                                             "/flights/create",
                                             Stream.of("_", "-", "$", "912AA")
-                                                  .map((x) -> mockGoodFlight(x).toString())
+                                                  .map((x) -> MockUtils.mockFlight("American Airlines", x).toString())
                                                   .toList()
                             ),
                             new StepOptions(true, false, false),
@@ -87,7 +81,9 @@ public class StepsInitializer {
                             "Test if the available seats are more than zero",
                             new StepRequest("POST",
                                             "/flights/create",
-                                            mockGoodFlight("AA448").put("availableSeats", 0).toString()
+                                            MockUtils.mockFlight("American Airlines", "AA448")
+                                                     .put("availableSeats", 0)
+                                                     .toString()
                             ),
                             new StepOptions(true, false, false),
                             new StepExpected(400)
@@ -99,7 +95,26 @@ public class StepsInitializer {
                 Step.create("TEST_SUCCESS_AA448",
                             "Test Successful Call",
                             "Test if the flight can be created. Expected Response: { id: \"new id\" }",
-                            new StepRequest("POST", urlPath, mockGoodFlight("AA448").toString()),
+                            new StepRequest("POST", urlPath,
+                                            // 5 days from now
+                                            MockUtils.mockFlight("American Airlines", "AA448", 5, 900, 5, 1400)
+                                                     .toString()
+                            ),
+                            new StepOptions(true, false, true),
+                            new StepExpected(201)
+
+                )
+        );
+
+        addStep(group.getName(),
+                Step.create("TEST_SUCCESS_AA754",
+                            "Test Successful Call",
+                            "Test if the flight can be created. Expected Response: { id: \"new id\" }",
+                            new StepRequest("POST", urlPath,
+                                            // 5 days from now
+                                            MockUtils.mockFlight("American Airlines", "AA754", 3, 700, 3, 1400)
+                                                     .toString()
+                            ),
                             new StepOptions(true, false, true),
                             new StepExpected(201)
 
@@ -110,9 +125,37 @@ public class StepsInitializer {
                 Step.create("TEST_UNIQUE_AA448",
                             "Test Flight Number Unique",
                             "Test if the flight number is unique",
-                            new StepRequest("POST", urlPath, mockGoodFlight("AA448").toString()),
+                            new StepRequest("POST",
+                                            urlPath,
+                                            MockUtils.mockFlight("American Airlines", "AA448", 5, 900, 5, 1400)
+                                                     .toString()
+                            ),
                             new StepOptions(true, false, false),
                             new StepExpected(400)
+
+                )
+        );
+
+        var jo = MockUtils.mockFlight("LATAM Airlines", "LA876", 3, 2300, 4, 500);
+        addStep(group.getName(),
+                Step.create("TEST_SUCCESS_LA876",
+                            "Test Successful Call",
+                            "Test if the flight can be created. Expected Response: { id: \"new id\" }",
+                            new StepRequest("POST", urlPath, jo.toString()),
+                            new StepOptions(true, false, false),
+                            new StepExpected(201)
+
+                )
+        );
+
+        jo = MockUtils.mockFlight("Delta Airlines", "DL116", 8, 800, 8, 1900);
+        addStep(group.getName(),
+                Step.create("TEST_SUCCESS_DL116",
+                            "Test Successful Call",
+                            "Test if the flight can be created. Expected Response: { id: \"new id\" }",
+                            new StepRequest("POST", urlPath, jo.toString()),
+                            new StepOptions(true, false, false),
+                            new StepExpected(201)
 
                 )
         );
@@ -121,7 +164,7 @@ public class StepsInitializer {
         //                Step.create("TEST_ADD_MANY",
         //                            "Test Flight Number Unique",
         //                            "Test if the flight number is unique",
-        //                            new StepRequest("POST",urlPath, mockGoodFlight("AA448").toString()),
+        //                            new StepRequest("POST",urlPath, MockUtils.mockFlight("AA448").toString()),
         //                            new StepOptions(false, false, false),
         //                            new StepExpected(400)
         //
@@ -171,7 +214,7 @@ public class StepsInitializer {
                                 String.format("Test %s Name Format",
                                               fieldPrefix.substring(0, 1).toUpperCase() + fieldPrefix.substring(1)
                                 ),
-                                String.format("Test if the first name format is validated", fieldPrefix),
+                                String.format("Test if the %s name format is validated", fieldPrefix),
                                 new StepRequest("POST", urlPath, Stream.of("", "a", "$", "-", "1").map((x) -> {
                                     var fieldName = fieldPrefix + "Name";
                                     var jo = mockGoodUser(x);
@@ -248,7 +291,7 @@ public class StepsInitializer {
         );
 
         addStep(group.getName(),
-                Step.create("UNKNOWN USER",
+                Step.create("UNKNOWN_USER",
                             "Test For Unknown User",
                             "Test if unknown user is validated",
                             new StepRequest("POST",
@@ -263,7 +306,7 @@ public class StepsInitializer {
         );
 
         addStep(group.getName(),
-                Step.create("WRONG PASSWORD",
+                Step.create("WRONG_PASSWORD",
                             "Test For Wrong Password",
                             "Test if wrong password is validated",
                             new StepRequest("POST",
@@ -278,7 +321,7 @@ public class StepsInitializer {
         );
 
         addStep(group.getName(),
-                Step.create("LOGIN SUCCESS",
+                Step.create("LOGIN_SUCCESS",
                             "Test For Login Success",
                             "Test if login is successful and a token is generated",
                             new StepRequest("POST",
@@ -287,10 +330,110 @@ public class StepsInitializer {
                                                             .put("password", "1234ABCD")
                                                             .toString()
                             ),
-                            new StepOptions(true, false, true),
-                            new StepExpected(200)
+                            new StepOptions(true, false, true, true),
+                            new StepExpected(200, (jo) -> {
+                                var token = jo.getString("token");
+                                return token == null ? new Exception("""
+                                                                             Expected Result:
+                                                                               { token, ... },
+                                                                             """) : null;
+                            }
+                            )
                 )
         );
     }
 
+    private void addGroupSearchFlight() {
+        var urlPath = "/flights/search";
+        var group = addGroup("SEARCH FLIGHT", 0.4, true);
+
+        addStep(group.getName(),
+                Step.create("NUMBER_EXACT_AA448",
+                            "Search flight number exact AA448",
+                            "Search for flight number exact AA448",
+                            new StepRequest("GET", urlPath + "?flightNumber=AA448"),
+                            new StepOptions(true, true, true),
+                            new StepExpected(200, (jo) -> {
+                                var failed = false;
+
+                                if (jo.getJSONArray("items") == null) {
+                                    failed = true;
+                                } else {
+                                    var items = jo.getJSONArray("items");
+                                    failed = items.length() != 1;
+                                    if (!failed) {
+                                        var item = items.getJSONObject(0);
+                                        failed = item.get("id") == null;
+                                        if (!failed) {
+                                            failed = !item.get("flightNumber").equals("AA448");
+                                        }
+                                    }
+                                }
+
+                                return failed ? new Exception("""
+                                                                      Expected Result:
+                                                                      { items: [ { id, flightNumber: AA448, ...  } ] }
+                                                                      """) : null;
+                            }
+                            )
+                )
+        );
+
+        // partial flight, partial airline and exact airline, all validate the same
+        Function<JSONObject, Exception> validator = (jo) -> {
+            var failed = false;
+
+            if (jo.getJSONArray("items") == null) {
+                failed = true;
+            } else {
+                var items = jo.getJSONArray("items");
+                failed = items.length() != 2;
+                if (!failed) {
+                    var item1 = items.getJSONObject(0);
+                    var item2 = items.getJSONObject(1);
+                    failed = item1.get("id") == null || !item1.get("flightNumber")
+                                                              .equals("AA448") || item2.get("id") == null || !item2.get(
+                            "flightNumber").equals("AA754");
+                }
+            }
+
+            return failed ? new Exception("""
+                                                  Expected Result:
+                                                  { items: [
+                                                      { id, flightNumber: AA448, ...  },
+                                                      { id, flightNumber: AA754, ...  },
+                                                    ] }
+                                                  """) : null;
+        };
+
+        addStep(group.getName(),
+                Step.create("NUMBER_PARTIAL_AA",
+                            "Search flight number partial AA",
+                            "Search for flight number partial AA",
+                            new StepRequest("GET", urlPath + "?flightNumber=AA"),
+                            new StepOptions(true, true, true),
+                            new StepExpected(200, validator)
+                )
+        );
+
+        addStep(group.getName(),
+                Step.create("AIRLINE_EXACT_AA",
+                            "Search airline exact American Airlines",
+                            "Search airline exact American Airlines",
+                            new StepRequest("GET", urlPath + "?airlineName=American%20Airlines"),
+                            new StepOptions(true, true, true),
+                            new StepExpected(200, validator)
+                )
+        );
+
+        addStep(group.getName(),
+                Step.create("AIRLINE_PARTIAL_AMERICAN",
+                            "Search airline partial American",
+                            "Search airline partial American",
+                            new StepRequest("GET", urlPath + "?airlineName=American"),
+                            new StepOptions(true, true, true),
+                            new StepExpected(200, validator)
+                )
+        );
+    }
 }

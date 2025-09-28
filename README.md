@@ -35,7 +35,7 @@ Flight {
 class FlightController {
     // UNPROTECTED
     @PostMapping("/create")
-    public ResponseEntity<NewIdDTO> create(NewFlightRequestDTO newFlight) {}
+    public ResponseEntity<NewIdDTO> create(@RequestBody NewFlightRequestDTO newFlight) {}
 }
 
 // class NewIdDTO {
@@ -67,7 +67,7 @@ User {
 class UserController {
     // UNPROTECTED
     @PostMapping("/register")
-    public ResponseEntity<NewIdDTO> register(RegisterUserDTO newUser) {}
+    public ResponseEntity<NewIdDTO> register(@RequestBody RegisterUserDTO newUser) {}
 }
 ```
 
@@ -91,7 +91,7 @@ Must-Have (+0.2)
 class AuthController {
     // UNPROTECTED
     @PostMapping("/login")
-    public ResponseEntity<AuthToken> login(LoginDTO login) {}
+    public ResponseEntity<AuthToken> login(@RequestBody LoginDTO login) {}
 }
 ```
 
@@ -115,7 +115,10 @@ Nice-Have (+0.2)
 class FlightController {
     // PROTECTED
     @GetMapping("/search")
-    public ResponseEntity<FlightSearchResponseDTO> search(FlightSearchRequestDTO requestDTO) {}
+    public ResponseEntity<FlightSearchResponseDTO> search(@RequestParam String flightNumber,
+                                                          @RequestParam String airlineName,
+                                                          @RequestParam String departureDateFrom,
+                                                          @RequestParam String departureDateTo) {}
 }
 ```
 
@@ -129,7 +132,7 @@ Nice-To-Have (+0.4): ONLY AFTER SEARCH IS IMPLEMENTED.
 class FlightController {
     // UNPROTECTED
     @PostMapping("/create-many")
-    public ResponseEntity<NewFlightManyResponseDTO> search(NewFlightManyRequestDTO requestDTO) {}
+    public ResponseEntity<NewFlightManyResponseDTO> search(@RequestBody NewFlightManyRequestDTO requestDTO) {}
 }
 ```
 
@@ -153,7 +156,7 @@ Nice-To-Have (+0.2)
 class FlightController {
     // PROTECTED
     @PostMapping("/book")
-    public ResponseEntity<NewIdDTO> book(FlightBookRequestDTO requestDTO) {}
+    public ResponseEntity<NewIdDTO> book(@RequestBody FlightBookRequestDTO requestDTO) {}
 }
 ```
 

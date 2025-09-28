@@ -12,33 +12,41 @@ public class Main {
     private final Boolean stepped;
     private final Boolean includeNiceToHave;
     private final HashMap<String, StepGroup> stepGroups;
-    private final HashMap<String, StepResponse> responses;
 
     public Main(String baseUrl, Boolean stepped, Boolean includeNiceToHave) {
         this.baseUrl = baseUrl;
         this.stepped = stepped;
         this.includeNiceToHave = includeNiceToHave;
         this.stepGroups = new StepsInitializer().initialize();
-        this.responses = new HashMap<>();
     }
 
     public void start() throws Exception {
-        this.responses.clear();
+        logger.info("Cleaning up");
         HttpCaller caller = new HttpCaller(baseUrl);
         caller.httpAny("DELETE", "/cleanup", "");
+        logger.info("Cleaned");
 
+        int totalSuccess = 0;
+        int totalFailure = 0;
         var executor = new StepExecutor(baseUrl);
         Double finalScore = 0D;
+        var responses = new HashMap<String, StepResponse>();
         for (Map.Entry<String, StepGroup> entryGroup : this.stepGroups.entrySet()) {
+            int groupSuccess = 0;
+            int groupFailure = 0;
             var stepGroup = entryGroup.getValue();
 
             var canRunGroup = stepGroup.isMustHave() || this.includeNiceToHave;
             if (!canRunGroup) {
                 System.out.printf("(Skipped) Group: %s\n", stepGroup.getName());
                 continue;
+            } else {
+                System.out.println();
+                System.out.println("====================================");
+                System.out.printf("Group: %s\n", stepGroup.getName());
             }
 
-            var anyFailure = false;
+            // begin steps
             for (Map.Entry<String, Step> entryStep : stepGroup.getSteps().entrySet()) {
                 var step = entryStep.getValue();
 
@@ -48,27 +56,39 @@ public class Main {
                     continue;
                 }
 
-                var stepResponse = executor.execute(step);
-                if (!anyFailure && !stepResponse.isSuccess()) {
-                    anyFailure = true;
+                var stepResponse = executor.execute(step, responses);
+
+                if (!stepResponse.isSuccess()) {
+                    groupFailure++;
+                } else {
+                    groupSuccess++;
+
+                    if (step.getOptions().saveResponse()) {
+                        responses.put(step.getName(), stepResponse);
+                    }
                 }
 
+                // failures are always reported
+                // successes are reported if configured or debug
                 if (!stepResponse.isSuccess() || (stepResponse.isSuccess() && (step.getOptions()
                                                                                    .reportSuccess() || logger.isDebugEnabled()))) {
                     reportResponse(stepGroup, step, stepResponse);
                 }
-
-                // TODO: should responses be grouped too?
-                this.responses.put(step.getName(), stepResponse);
             }
+            // end steps
 
-            if (!anyFailure) {
+            System.out.println();
+            System.out.printf("Group Succeeded: %d of %d\n", groupSuccess, groupSuccess + groupFailure);
+            if (groupFailure == 0) {
                 var groupScore = stepGroup.getScore();
                 finalScore += groupScore;
-                System.out.printf("SCORE WON: %f\n", groupScore);
+                System.out.printf("SCORE WON PER GROUP: %f\n", groupScore);
             } else {
-                System.out.println("SCORE WON: 0.0 (One of the tests failed)");
+                System.out.println("SCORE WON PER GROUP: 0.0");
             }
+
+            totalSuccess += groupSuccess;
+            totalFailure += groupFailure;
 
             if (this.stepped) {
                 System.out.println("(Stepped Mode) Press any key to continue ...");
@@ -76,34 +96,30 @@ public class Main {
             }
         }
 
-        System.out.printf("FINAL SCORE: %f\n", finalScore);
+        System.out.println();
+        System.out.println();
+        System.out.println("====================================");
+        System.out.println("========== GRAND TOTAL =============");
+        System.out.println("====================================");
+        System.out.printf("  Total Succeeded: %d of %d\n", totalSuccess, totalSuccess + totalFailure);
+        System.out.printf("  FINAL SCORE: %f\n", finalScore);
+        System.out.println("====================================");
+        System.out.println();
     }
 
     private void reportResponse(StepGroup stepGroup, Step step, StepResponse stepResponse) {
-        var responseReceived = "";
-
-        if (stepResponse.isSuccess()) {
-            if (stepResponse.getResponseJSON() != null) {
-                responseReceived = stepResponse.getResponseJSON().toString(2);
-            } else {
-                responseReceived = stepResponse.getResponseString();
-            }
-        } else {
-            responseReceived = stepResponse.getException().getMessage();
-        }
-
         System.out.printf("""
                                   ------------------------------------
                                   Step: %s
                                   Description: %s
-                                  Request:
-                                  %s %s
-                                  %s
-                                  
+                                  Request: %s %s
+                                    %s
                                   Response Received:
-                                  %s %s
+                                    %s
+                                    %s
                                   
                                   Result: %s
+                                  
                                   """,
                           stepGroup.getStepFullTitle(step),
                           step.getDescription(),
@@ -113,8 +129,10 @@ public class Main {
                           stepResponse.getRequestBody(),
                           // show the last response received
                           stepResponse.getResponseStatus(),
-                          responseReceived,
-                          stepResponse.isSuccess() ? "SUCCESS" : "FAILURE"
+                          stepResponse.getResponseJSON() != null ? stepResponse.getResponseJSON()
+                                                                               .toString(2) : stepResponse.getResponseString(),
+                          stepResponse.isSuccess() ? "SUCCESS" : "FAILURE ->\n" + stepResponse.getException()
+                                                                                              .getMessage()
         );
     }
 }
