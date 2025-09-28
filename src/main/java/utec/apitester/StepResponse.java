@@ -5,9 +5,19 @@ import org.json.JSONObject;
 
 public class StepResponse {
     private Boolean success = false;
-    private Exception error;
+    private Exception exception;
+    private String requestBody;
     private JSONObject responseJSON;
     private String responseString;
+    private Integer responseStatus;
+
+    public String getRequestBody() {
+        return requestBody;
+    }
+
+    public void setRequestBody(String requestBody) {
+        this.requestBody = requestBody;
+    }
 
     public Boolean isSuccess() {
         return success;
@@ -15,16 +25,16 @@ public class StepResponse {
 
     public void setSuccess() {
         this.success = true;
-        this.error = null;
+        this.exception = null;
     }
 
-    public Exception getError() {
-        return error;
+    public Exception getException() {
+        return exception;
     }
 
-    public void setError(Exception error) {
+    public void setException(Exception exception) {
         this.success = false;
-        this.error = error;
+        this.exception = exception;
     }
 
     public JSONObject getResponseJSON() {
@@ -41,7 +51,16 @@ public class StepResponse {
         try {
             this.responseJSON = new JSONObject(responseString);
         } catch (JSONException ex) {
+            // ignore any json parsing error, and simply assume the response was a string
             this.responseJSON = null;
         }
+    }
+
+    public Integer getResponseStatus() {
+        return responseStatus;
+    }
+
+    public void setResponseStatus(Integer responseStatus) {
+        this.responseStatus = responseStatus;
     }
 }

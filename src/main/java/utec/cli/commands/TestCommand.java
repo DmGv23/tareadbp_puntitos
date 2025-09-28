@@ -11,10 +11,10 @@ public class TestCommand implements Runnable {
     @Mixin
     private HelpOption helpOption;
 
-    @Option(names = "-u", description = "url to api (e.g. localhost:8080)", defaultValue = "localhost:8080")
+    @Option(names = "-u", description = "url to api (e.g. localhost:8080)", defaultValue = "http://localhost:8080")
     private String url;
 
-    @Option(names = "-s", description = "stepped execution", type = Boolean.class, defaultValue = "false")
+    @Option(names = "-s", description = "stepped execution (group by group)", type = Boolean.class, defaultValue = "false")
     private Boolean stepped;
 
     @Option(names = "-n", description = "include nice-to-have tests", type = Boolean.class, defaultValue = "false")
@@ -37,7 +37,8 @@ public class TestCommand implements Runnable {
             var main = new Main(url, stepped, includeNiceToHave);
             main.start();
         } catch (Exception ex) {
-            System.err.println("ERROR " + ex.getMessage());
+            System.err.printf("ERROR %s\n", ex.getMessage() != null ? ex.getMessage() : ex.toString());
+            ex.printStackTrace(System.err);
         }
 
         System.out.println("Finished");

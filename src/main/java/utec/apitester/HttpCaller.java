@@ -54,9 +54,9 @@ public class HttpCaller {
                 default -> throw new Exception("Unsupported HTTP method: " + method);
             };
 
-            logger.debug("starting request: {} {}", method, path);
+            logger.debug("starting request: {} {} {}", method, path, body);
             var response = client.send(builder.build(), HttpResponse.BodyHandlers.ofString());
-            logger.debug("finished request: {} {} -> {}", method, path, response.body());
+            logger.debug("finished request: {} {} -> {} {}", method, path, response.statusCode(), response.body());
             return response;
         }
     }

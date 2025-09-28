@@ -7,9 +7,9 @@ This project is meant to test week 7 exercise and verify how many goals were suc
 ```bash
 # Run in a single run
 # -u: Set the url to your application to be tested
-# -s: (optional) Hit <any key> to pass step to step (hint: use Ctrl+C to quit). If not present, the application will execute in a single run.
+# -s: (optional) Hit <any key> to pass group by group (hint: use Ctrl+C to quit). If not present, the application will execute in a single run until the end.
 # -n: (optional) When set, run the nice-to-have checks. When not set, only the must-have checks will be executed.
-$ java -jar week07-tester.jar test -u localhost:8080
+$ java -jar week07-tester.jar test -u http://localhost:8080
 ```
 
 ## User Needs
@@ -18,7 +18,7 @@ You, as the main development team for Fly Away Travel, are in charge of creating
 
 The business workflow that must be supported is:
 
-1. The travel agency has to register a flight.
+1. The travel agency has to create a flight.
 
 ```java
 // basic schema
@@ -51,20 +51,6 @@ Must-Have (+0.2)
 - Available Seats > 0.
 - Flight Numbers cannot be repeated.
 
-Nice-To-Have (+0.4)
-
-- Add N flights (Tip: Async operation).
-
-```java
-// required mapping
-@RequestMapping("/flights")
-class FlightController {
-    // UNPROTECTED
-    @PostMapping("/create-many")
-    public ResponseEntity<NewFlightManyResponseDTO> search(NewFlightManyRequestDTO requestDTO) {}
-}
-```
-
 2. The customer must register as a user.
 
 ```java
@@ -89,13 +75,15 @@ Must-Have (+0.2)
 
 - Mandatory fields: First Name, Last Name, Email Address, Password.
 - Email must be a valid email address
-- First Name must be at least 1 character
-- Last Name must be at least 1 character
+- First Name must be at least 1 alpha upper case character (A-Z)
+- Last Name must be at least 1 alpha upper case character (A-Z)
 - Password must be at least 8 letters and numbers.
 
 3. (Must-Have) The customer then must acquire an authentication token. (+0.2)
 
-- All operations related to the customer must receive this authentication token so the API can tell who is calling it.
+- Email and password are mandatory
+- Must validate for unknown email
+- Must validate for wrong password
 
 ```java
 // required mapping
@@ -106,6 +94,8 @@ class AuthController {
     public ResponseEntity<AuthToken> login(LoginDTO login) {}
 }
 ```
+
+- All operations related to the customer must receive this authentication token so the API can tell who is calling it.
 
 4. The customer can search the flights by airline, flight number, or departure date.
 
@@ -128,6 +118,22 @@ class FlightController {
     public ResponseEntity<FlightSearchResponseDTO> search(FlightSearchRequestDTO requestDTO) {}
 }
 ```
+
+Nice-To-Have (+0.4): ONLY AFTER SEARCH IS IMPLEMENTED.
+
+- Add N flights (Tip: Async operation).
+
+```java
+// required mapping
+@RequestMapping("/flights")
+class FlightController {
+    // UNPROTECTED
+    @PostMapping("/create-many")
+    public ResponseEntity<NewFlightManyResponseDTO> search(NewFlightManyRequestDTO requestDTO) {}
+}
+```
+
+The tester will wait 10 seconds, and then call GET /flights/search to verify if all were registered.
 
 5. The customer can purchase a flight seat
 
@@ -199,7 +205,7 @@ Fly Away Travel
 // BASIC IMPLEMENTATION YOU HAVE TO COMPLETE IT
 @RestController("/cleanup")
 class CleanupController {
-    @PostMapping
+    @DeleteMapping()
     public ResponseEntity cleanup() {
         customerService.deleteAll();
         flightService.deleteAll();

@@ -7,8 +7,9 @@ public class Step {
     private StepRequest request;
     private StepOptions options;
     private StepExpected expected;
-    private Function<Step, String> description;
-    private Function<Step, String> title;
+    private Function<Step, String> fnDescription;
+    private Function<Step, String> fnTitle;
+    private Double score;
 
     public static Step create(String name, String title, String description, StepRequest request, StepOptions options,
                               StepExpected expected) {
@@ -28,8 +29,8 @@ public class Step {
     public static Step create(String name, Function<Step, String> title, Function<Step, String> description,
                               StepRequest request, StepOptions options, StepExpected expected) {
         var step = new Step();
-        step.title = title;
-        step.description = description;
+        step.fnTitle = title;
+        step.fnDescription = description;
         step.name = name;
         step.request = request;
         step.options = options;
@@ -53,11 +54,11 @@ public class Step {
         return expected;
     }
 
-    public Function<Step, String> getDescription() {
-        return description;
+    public String getDescription() {
+        return fnDescription.apply(this);
     }
 
-    public Function<Step, String> getTitle() {
-        return title;
+    public String getTitle() {
+        return fnTitle.apply(this);
     }
 }
