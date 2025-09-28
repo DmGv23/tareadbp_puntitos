@@ -94,7 +94,7 @@ public class Main {
             totalFailure += groupFailure;
 
             if (this.stepped) {
-                System.out.println("(Stepped Mode) Press any key to continue ...");
+                System.out.println("(Stepped Mode) Press Enter to continue ...");
                 System.in.read();
             }
         }
