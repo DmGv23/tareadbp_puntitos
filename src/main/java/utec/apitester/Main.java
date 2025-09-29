@@ -57,12 +57,6 @@ public class Main {
             for (Map.Entry<String, Step> entryStep : stepGroup.getSteps().entrySet()) {
                 var step = entryStep.getValue();
 
-                var canRunStep = step.getOptions().mustHave() || this.includeNiceToHave;
-                if (!canRunStep) {
-                    PrintUtils.stepSkipped(stepGroup.getStepFullTitle(step));
-                    continue;
-                }
-
                 var stepResponse = executor.execute(step, responses);
 
                 if (!stepResponse.isSuccess()) {
@@ -107,10 +101,7 @@ public class Main {
 
             var bookingInfo = responses.get("READ_SUCCESS_BOOK_FLIGHT_AA448").getResponseJSON();
 
-            //var emailPath = Paths.get(String.format("flight_booking_email_%s.txt", bookingInfo.getString("id")));
-            var emailPath = Paths.get(String.format("flight_booking_email_e1fbe57b-4395-4ac5-bb04-5caff85c835d.txt",
-                                                    bookingInfo.getString("id")
-            ));
+            var emailPath = Paths.get(String.format("flight_booking_email_%s.txt", bookingInfo.getString("id")));
             System.out.printf("Expected Path: %s\n", emailPath.toAbsolutePath());
 
             boolean success = true;

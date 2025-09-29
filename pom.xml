@@ -104,7 +104,6 @@
                         <argument>test</argument>
                         <argument>-u</argument>
                         <argument>http://localhost:8080</argument>
-                        <argument>-n</argument>
                     </arguments>
                 </configuration>
             </plugin>

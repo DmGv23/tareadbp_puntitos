@@ -73,7 +73,7 @@ public class StepsInitializer {
                 Step.create("FLIGHT_MANDATORY_FIELDS",
                             "Test if all mandatory fields are validated (airlineName, flightNumber, estDepartureTime, estArrivalTime, availableSeats)",
                             new StepRequest("POST", urlPath, "{}"),
-                            new StepOptions(true, false, false),
+                            new StepOptions(false, false),
                             new StepExpected(400)
                 )
         );
@@ -87,7 +87,7 @@ public class StepsInitializer {
                                                   .map((x) -> MockUtils.mockFlight("American Airlines", x).toString())
                                                   .toList()
                             ),
-                            new StepOptions(true, false, false),
+                            new StepOptions(false, false),
                             new StepExpected(400)
 
                 )
@@ -102,7 +102,7 @@ public class StepsInitializer {
                                                      .put("availableSeats", 0)
                                                      .toString()
                             ),
-                            new StepOptions(true, false, false),
+                            new StepOptions(false, false),
                             new StepExpected(400)
 
                 )
@@ -120,7 +120,7 @@ public class StepsInitializer {
                                                                                                                3,
                                                                                                                1400
                                                                                                        ).toString()
-                            ), new StepOptions(true, false, true, true), new StepExpected(201, getExpectOneFieldLambda("id"))
+                            ), new StepOptions(false, true, true), new StepExpected(201, getExpectOneFieldLambda("id"))
                 )
         );
 
@@ -131,7 +131,7 @@ public class StepsInitializer {
                                             urlPath,
                                             MockUtils.mockFlight("XX", "AA448", 0, 0, 0, 0).toString()
                             ),
-                            new StepOptions(true, false, false),
+                            new StepOptions(false, false),
                             new StepExpected(400)
                 )
         );
@@ -148,7 +148,7 @@ public class StepsInitializer {
                                                                                                                5,
                                                                                                                1400
                                                                                                        ).toString()
-                            ), new StepOptions(true, false, true, true), new StepExpected(201, getExpectOneFieldLambda("id"))
+                            ), new StepOptions(false, true, true), new StepExpected(201, getExpectOneFieldLambda("id"))
                 )
         );
 
@@ -158,7 +158,7 @@ public class StepsInitializer {
                 Step.create("TEST_SUCCESS_LA876",
                             "Test if the flight can be created",
                             new StepRequest("POST", urlPath, jo.toString()),
-                            new StepOptions(true, false, false, true),
+                            new StepOptions(false, false, true),
                             new StepExpected(201, getExpectOneFieldLambda("id"))
                 )
         );
@@ -168,7 +168,7 @@ public class StepsInitializer {
                 Step.create("TEST_SUCCESS_DL116",
                             "Test if the flight can be created",
                             new StepRequest("POST", urlPath, jo.toString()),
-                            new StepOptions(true, false, false, true),
+                            new StepOptions(false, false, true),
                             new StepExpected(201, getExpectOneFieldLambda("id"))
                 )
         );
@@ -178,7 +178,7 @@ public class StepsInitializer {
                 Step.create("TEST_SUCCESS_PAST_NK962",
                             "Test if the flight can be created",
                             new StepRequest("POST", urlPath, jo.toString()),
-                            new StepOptions(true, false, false, true),
+                            new StepOptions(false, false, true),
                             new StepExpected(201, getExpectOneFieldLambda("id"))
                 )
         );
@@ -192,7 +192,7 @@ public class StepsInitializer {
                 Step.create("REGISTER_MANDATORY_FIELDS",
                             "Test if all mandatory fields are validated (firstName, lastName, email, password)",
                             new StepRequest("POST", urlPath, "{}"),
-                            new StepOptions(true, false, false),
+                            new StepOptions(false, false),
                             new StepExpected(400)
                 )
         );
@@ -207,7 +207,7 @@ public class StepsInitializer {
                                                                            .toString())
                                                   .toList()
                             ),
-                            new StepOptions(true, false, false),
+                            new StepOptions(false, false),
                             new StepExpected(400)
                 )
         );
@@ -223,7 +223,7 @@ public class StepsInitializer {
                                     return jo.toString();
                                 }).toList()
                                 ),
-                                new StepOptions(true, false, false),
+                                new StepOptions(false, false),
                                 new StepExpected(400)
                     )
             );
@@ -242,7 +242,7 @@ public class StepsInitializer {
                                                   ).toString())
                                                   .toList()
                             ),
-                            new StepOptions(true, false, false),
+                            new StepOptions(false, false),
                             new StepExpected(400)
                 )
         );
@@ -255,7 +255,7 @@ public class StepsInitializer {
                                             MockUtils.mockUser("John", "Doe", "johndoe@gmail.com", "1234ABCD")
                                                      .toString()
                             ),
-                            new StepOptions(true, false, true, true),
+                            new StepOptions(false, true, true),
                             new StepExpected(201, getExpectOneFieldLambda("id"))
                 )
         );
@@ -268,7 +268,7 @@ public class StepsInitializer {
                                             MockUtils.mockUser("John", "Doe", "johndoe@gmail.com", "1234ABCD")
                                                      .toString()
                             ),
-                            new StepOptions(true, false, false),
+                            new StepOptions(false, false),
                             new StepExpected(400)
 
                 )
@@ -289,7 +289,7 @@ public class StepsInitializer {
                                                           new JSONObject().put("password", "whatever").toString()
                                             )
                             ),
-                            new StepOptions(true, false, false),
+                            new StepOptions(false, false),
                             new StepExpected(400)
                 )
         );
@@ -303,7 +303,7 @@ public class StepsInitializer {
                                                             .put("password", "whatever")
                                                             .toString()
                             ),
-                            new StepOptions(true, false, false),
+                            new StepOptions(false, false),
                             new StepExpected(400)
                 )
         );
@@ -317,7 +317,7 @@ public class StepsInitializer {
                                                             .put("password", "whatever")
                                                             .toString()
                             ),
-                            new StepOptions(true, false, false),
+                            new StepOptions(false, false),
                             new StepExpected(400)
                 )
         );
@@ -331,7 +331,7 @@ public class StepsInitializer {
                                                             .put("password", "1234ABCD")
                                                             .toString()
                             ),
-                            new StepOptions(true, false, true, true),
+                            new StepOptions(false, true, true),
                             new StepExpected(200, getExpectOneFieldLambda("token"))
                 )
         );
@@ -345,7 +345,7 @@ public class StepsInitializer {
                 Step.create("NUMBER_EXACT_AA448",
                             "Search for flight number exact AA448",
                             new StepRequest("GET", urlPath + "?flightNumber=AA448"),
-                            new StepOptions(true, true, true),
+                            new StepOptions(true, true),
                             new StepExpected(200, (jo) -> {
                                 var failed = false;
 
@@ -403,7 +403,7 @@ public class StepsInitializer {
                 Step.create("NUMBER_PARTIAL_AA",
                             "Search for flight number partial AA",
                             new StepRequest("GET", urlPath + "?flightNumber=AA"),
-                            new StepOptions(true, true, true),
+                            new StepOptions(true, true),
                             new StepExpected(200, validator)
                 )
         );
@@ -412,7 +412,7 @@ public class StepsInitializer {
                 Step.create("AIRLINE_EXACT_AA",
                             "Search airline exact American Airlines",
                             new StepRequest("GET", urlPath + "?airlineName=American%20Airlines"),
-                            new StepOptions(true, true, true),
+                            new StepOptions(true, true),
                             new StepExpected(200, validator)
                 )
         );
@@ -421,7 +421,7 @@ public class StepsInitializer {
                 Step.create("AIRLINE_PARTIAL_AMERICAN",
                             "Search airline partial American",
                             new StepRequest("GET", urlPath + "?airlineName=American"),
-                            new StepOptions(true, true, true),
+                            new StepOptions(true, true),
                             new StepExpected(200, validator)
                 )
         );
@@ -467,7 +467,7 @@ public class StepsInitializer {
                                                     dateFrom), StandardCharsets.UTF_8
                                             )
                             ),
-                            new StepOptions(true, true, true),
+                            new StepOptions(true, true),
                             new StepExpected(200, validator.apply("DL116"))
                 )
         );
@@ -482,7 +482,7 @@ public class StepsInitializer {
                                                                                                  StandardCharsets.UTF_8
                                             )
                             ),
-                            new StepOptions(true, true, true),
+                            new StepOptions(true, true),
                             new StepExpected(200, validator.apply("NK962"))
                 )
         );
@@ -504,7 +504,7 @@ public class StepsInitializer {
                                                                                          .getString("id")
                                             )
                             ),
-                            new StepOptions(true, true, true, true),
+                            new StepOptions(true, true, true),
                             new StepExpected(200, getExpectOneFieldLambda("id"))
                 )
         );
@@ -517,7 +517,7 @@ public class StepsInitializer {
                                                     "TEST_SUCCESS_BOOK_FLIGHT_AA448").getResponseJSON().getString("id"),
                                             ""
                             ),
-                            new StepOptions(true, true, false, true),
+                            new StepOptions(true, false, true),
                             new StepExpected(200, (jo) -> {
                                 if (!Stream.of("id",
                                                "bookingDate",
@@ -550,7 +550,7 @@ public class StepsInitializer {
                                                                                          .getString("id")
                                             )
                             ),
-                            new StepOptions(true, true, true),
+                            new StepOptions(true, true),
                             new StepExpected(400)
                 )
         );
@@ -572,7 +572,7 @@ public class StepsInitializer {
                                                                                          .getString("id")
                                             )
                             ),
-                            new StepOptions(true, true, true),
+                            new StepOptions(true, true),
                             new StepExpected(400)
                 )
         );
@@ -589,7 +589,7 @@ public class StepsInitializer {
                                                                                          .getString("id")
                                             )
                             ),
-                            new StepOptions(true, true, true),
+                            new StepOptions(true, true),
                             new StepExpected(400)
                 )
         );
@@ -629,7 +629,7 @@ public class StepsInitializer {
                                                                  )
                                             ).toString()
                             ),
-                            new StepOptions(true, true, true, true),
+                            new StepOptions(true, true, true),
                             new StepExpected(201)
                 )
         );
@@ -638,7 +638,7 @@ public class StepsInitializer {
                 Step.create("READ_MANY_FLIGHT_UNITED",
                             "Read the flights that were created (United Airlines)",
                             new StepRequest("GET", "/flights/search?airlineName=United%20Airlines"),
-                            new StepOptions(true, true, true, false, 10),
+                            new StepOptions(true, true, false, 10),
                             new StepExpected(200, (jo) -> {
                                 var failed = false;
 
