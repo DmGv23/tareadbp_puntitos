@@ -1,5 +1,7 @@
 package utec.apitester;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import utec.apitester.utils.HttpCaller;
 
 import java.util.Arrays;
@@ -7,6 +9,7 @@ import java.util.HashMap;
 import java.util.List;
 
 public class StepExecutor {
+    private static final Logger logger = LoggerFactory.getLogger(StepExecutor.class);
     private final String baseUrl;
 
     public StepExecutor(String baseUrl) {
@@ -40,6 +43,11 @@ public class StepExecutor {
                 var loginResponse = responses.get("LOGIN_SUCCESS");
                 var token = loginResponse.getResponseJSON().getString("token");
                 caller.setBearerToken(token);
+            }
+
+            if (step.getOptions().preWaitSeconds() > 0) {
+                logger.info("Waiting for {} seconds", step.getOptions().preWaitSeconds());
+                Thread.sleep(step.getOptions().preWaitSeconds() * 1000);
             }
 
             var httpResponse = caller.httpAny(step.getRequest().getMethod(), requestPath, body);

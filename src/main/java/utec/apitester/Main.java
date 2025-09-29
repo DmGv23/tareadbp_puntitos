@@ -4,8 +4,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import utec.apitester.utils.HttpCaller;
 
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Stream;
 
 public class Main {
     private final Logger logger = LoggerFactory.getLogger(Main.class);
@@ -97,6 +100,63 @@ public class Main {
             if (this.stepped) {
                 System.out.println("(Stepped Mode) Press Enter to continue ...");
                 System.in.read();
+            }
+        }
+
+        // special case for email
+        if (this.includeNiceToHave) {
+            System.out.println();
+            System.out.println("====================================");
+            System.out.println("Special Case: Review Email Notification");
+            System.out.println();
+            totalGroups++;
+
+            var bookingInfo = responses.get("READ_SUCCESS_BOOK_FLIGHT_AA448").getResponseJSON();
+
+            var emailPath = Paths.get(String.format("flight_booking_email_%s.txt", bookingInfo.getString("id")));
+            System.out.printf("Expected Path: %s\n", emailPath.toAbsolutePath());
+
+            boolean success = true;
+            String reason = "";
+            if (!Files.exists(emailPath)) {
+                reason = "File not found";
+                success = false;
+            } else {
+                String content = Files.readString(emailPath);
+
+                success = Stream.of("bookingDate",
+                                    "customerFirstName",
+                                    "customerLastName",
+                                    "flightNumber",
+                                    "estDepartureTime",
+                                    "estArrivalTime"
+                ).allMatch(f -> {
+                    var value = bookingInfo.getString(f);
+                    if (content.contains(value)) {
+                        System.out.printf("✔️ Found %s: %s\n", f, value);
+                        return true;
+                    } else {
+                        System.out.printf("❌️ Not Found %s: %s\n", f, value);
+                        return false;
+                    }
+                });
+
+                if (!success) {
+                    reason = "Some fields were not found in the email content";
+                }
+            }
+
+            System.out.println();
+            if (success) {
+                double score = 0.2;
+                totalSuccess++;
+                finalScore += score;
+                System.out.println("Result: SUCCESS");
+                System.out.printf("POINTS WON: %f\n", score);
+            } else {
+                totalFailure++;
+                System.out.printf("Result: FAILURE (%s)\n", reason);
+                System.out.println("POINTS WON: 0.0");
             }
         }
 

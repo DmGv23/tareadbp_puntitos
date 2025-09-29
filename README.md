@@ -117,8 +117,8 @@ class FlightController {
     @GetMapping("/search")
     public ResponseEntity<FlightSearchResponseDTO> search(@RequestParam String flightNumber,
                                                           @RequestParam String airlineName,
-                                                          @RequestParam String departureDateFrom,
-                                                          @RequestParam String departureDateTo) {}
+                                                          @RequestParam String estDepartureTimeFrom,
+                                                          @RequestParam String estDepartureTimeTo) {}
 }
 ```
 
@@ -145,7 +145,19 @@ Must-Have (+0.5)
 - Mandatory Input: Flight Id
 - The rest of the fields must be calculated: Customer Id, Customer First Name, Customer Last Name, Booking Date
 - The flights cannot be oversold.
-- There must be a `GET /flight/book/{id}` endpoint that must the booking information.
+- There must be a `GET /flight/book/{id}` endpoint that must show the booking information
+
+```
+ {
+  id,
+  bookingDate,
+  flightId,
+  flightNumber,
+  customerId,
+  customerFirstName,
+  customerLastName
+}
+```
 
 Nice-To-Have (+0.2)
 

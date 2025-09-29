@@ -6,7 +6,10 @@ import utec.apitester.utils.MockUtils;
 
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -24,6 +27,9 @@ public class StepsInitializer {
         addGroupSearchFlightNiceToHave();
         addGroupBookFlight();
         addGroupBookFlightNiceToHave();
+
+        // always add to the end
+        addGroupCreateManyFlightNiceToHave();
         return stepGroups;
     }
 
@@ -109,12 +115,24 @@ public class StepsInitializer {
                                                                                                        MockUtils.mockFlight(
                                                                                                                "American Airlines",
                                                                                                                "AA448",
-                                                                                                               5,
-                                                                                                               900,
-                                                                                                               5,
+                                                                                                               3,
+                                                                                                               700,
+                                                                                                               3,
                                                                                                                1400
                                                                                                        ).toString()
                             ), new StepOptions(true, false, true, true), new StepExpected(201, getExpectOneFieldLambda("id"))
+                )
+        );
+
+        addStep(group.getName(),
+                Step.create("TEST_UNIQUE_AA448",
+                            "Test if the flight number is unique",
+                            new StepRequest("POST",
+                                            urlPath,
+                                            MockUtils.mockFlight("XX", "AA448", 0, 0, 0, 0).toString()
+                            ),
+                            new StepOptions(true, false, false),
+                            new StepExpected(400)
                 )
         );
 
@@ -125,38 +143,23 @@ public class StepsInitializer {
                                                                                                        MockUtils.mockFlight(
                                                                                                                "American Airlines",
                                                                                                                "AA754",
-                                                                                                               3,
+                                                                                                               5,
                                                                                                                700,
-                                                                                                               3,
+                                                                                                               5,
                                                                                                                1400
                                                                                                        ).toString()
                             ), new StepOptions(true, false, true, true), new StepExpected(201, getExpectOneFieldLambda("id"))
-
                 )
         );
 
-        addStep(group.getName(),
-                Step.create("TEST_UNIQUE_AA448",
-                            "Test if the flight number is unique",
-                            new StepRequest("POST",
-                                            urlPath,
-                                            MockUtils.mockFlight("American Airlines", "AA448", 5, 900, 5, 1400)
-                                                     .toString()
-                            ),
-                            new StepOptions(true, false, false),
-                            new StepExpected(400)
-
-                )
-        );
-
-        var jo = MockUtils.mockFlight("LATAM Airlines", "LA876", 3, 2300, 4, 500);
+        // overlaps with AA448
+        var jo = MockUtils.mockFlight("LATAM Airlines", "LA876", 3, 900, 3, 1500);
         addStep(group.getName(),
                 Step.create("TEST_SUCCESS_LA876",
                             "Test if the flight can be created",
                             new StepRequest("POST", urlPath, jo.toString()),
                             new StepOptions(true, false, false, true),
                             new StepExpected(201, getExpectOneFieldLambda("id"))
-
                 )
         );
 
@@ -167,7 +170,6 @@ public class StepsInitializer {
                             new StepRequest("POST", urlPath, jo.toString()),
                             new StepOptions(true, false, false, true),
                             new StepExpected(201, getExpectOneFieldLambda("id"))
-
                 )
         );
 
@@ -178,7 +180,6 @@ public class StepsInitializer {
                             new StepRequest("POST", urlPath, jo.toString()),
                             new StepOptions(true, false, false, true),
                             new StepExpected(201, getExpectOneFieldLambda("id"))
-
                 )
         );
     }
@@ -462,8 +463,8 @@ public class StepsInitializer {
                 Step.create("DEPARTURE_DATE_FROM_TARGET_DL116",
                             "Search flight by departure date from",
                             new StepRequest("GET",
-                                            urlPath + "?departureDateFrom=" + URLEncoder.encode(DateUtils.toISO(dateFrom),
-                                                                                                StandardCharsets.UTF_8
+                                            urlPath + "?estDepartureTimeFrom=" + URLEncoder.encode(DateUtils.toISO(
+                                                    dateFrom), StandardCharsets.UTF_8
                                             )
                             ),
                             new StepOptions(true, true, true),
@@ -477,8 +478,8 @@ public class StepsInitializer {
                 Step.create("DEPARTURE_DATE_TO_TARGET_NK962",
                             "Search flight by departure date to",
                             new StepRequest("GET",
-                                            urlPath + "?departureDateTo=" + URLEncoder.encode(DateUtils.toISO(dateTo),
-                                                                                              StandardCharsets.UTF_8
+                                            urlPath + "?estDepartureTimeTo=" + URLEncoder.encode(DateUtils.toISO(dateTo),
+                                                                                                 StandardCharsets.UTF_8
                                             )
                             ),
                             new StepOptions(true, true, true),
@@ -516,23 +517,20 @@ public class StepsInitializer {
                                                     "TEST_SUCCESS_BOOK_FLIGHT_AA448").getResponseJSON().getString("id"),
                                             ""
                             ),
-                            new StepOptions(true, true, false),
+                            new StepOptions(true, true, false, true),
                             new StepExpected(200, (jo) -> {
-                                if (!Stream.of(jo.has("id"),
-                                               jo.has("bookingDate"),
-                                               jo.has("flightId"),
-                                               jo.has("customerId"),
-                                               jo.has("customerFirstName"),
-                                               jo.has("customerLastName")
-                                ).allMatch(x -> x) || !Stream.of(jo.get("id"),
-                                                                 jo.get("bookingDate"),
-                                                                 jo.get("flightId"),
-                                                                 jo.get("customerId"),
-                                                                 jo.get("customerFirstName"),
-                                                                 jo.get("customerLastName")
-                                ).allMatch(Objects::nonNull)) {
+                                if (!Stream.of("id",
+                                               "bookingDate",
+                                               "flightId",
+                                               "flightNumber",
+                                               "customerId",
+                                               "customerFirstName",
+                                               "customerLastName",
+                                               "estDepartureTime",
+                                               "estArrivalTime"
+                                ).allMatch(f -> jo.has(f) && jo.get(f) != null)) {
                                     return new Exception(
-                                            "Expected Result: { id, bookingDate, flightId, customerId, customerFirstName, customerLastName }");
+                                            "Expected Result: { id, bookingDate, flightId, flightNumber, customerId, customerFirstName, customerLastName }");
                                 }
 
                                 return null;
@@ -578,5 +576,100 @@ public class StepsInitializer {
                             new StepExpected(400)
                 )
         );
+
+        // this assumes that John Doe has already booked AA448 (must have test)
+        addStep(group.getName(),
+                Step.create("TEST_CANNOT_BOOK_OVERLAPPING_AA448_LA876",
+                            "Test cannot book overlapping flights AA448 LA876",
+                            new StepRequest("POST",
+                                            bookPath,
+                                            (responses) -> new JSONObject().put("flightId",
+                                                                                responses.get("TEST_SUCCESS_LA876")
+                                                                                         .getResponseJSON()
+                                                                                         .getString("id")
+                                            )
+                            ),
+                            new StepOptions(true, true, true),
+                            new StepExpected(400)
+                )
+        );
+    }
+
+    private void addGroupCreateManyFlightNiceToHave() {
+        // only possible after the group search flight exists
+        var group = addGroup("CREATE_MANY_FLIGHT_NICE_TO_HAVE", 0.4, false);
+
+        addStep(group.getName(),
+                Step.create("CREATE_MANY_FLIGHT_UNITED",
+                            "Create many flights for United Airlines",
+                            new StepRequest("POST",
+                                            "/flights/create-many",
+                                            new JSONObject().put("inputs",
+                                                                 Arrays.asList(MockUtils.mockFlight("United Airlines",
+                                                                                                    "UA001",
+                                                                                                    1,
+                                                                                                    0,
+                                                                                                    1,
+                                                                                                    1
+                                                                               ),
+                                                                               MockUtils.mockFlight("United Airlines",
+                                                                                                    "UA002",
+                                                                                                    1,
+                                                                                                    2,
+                                                                                                    1,
+                                                                                                    3
+                                                                               ),
+                                                                               MockUtils.mockFlight("United Airlines",
+                                                                                                    "UA003",
+                                                                                                    1,
+                                                                                                    3,
+                                                                                                    1,
+                                                                                                    4
+                                                                               )
+                                                                 )
+                                            ).toString()
+                            ),
+                            new StepOptions(true, true, true, true),
+                            new StepExpected(201)
+                )
+        );
+
+        addStep(group.getName(),
+                Step.create("READ_MANY_FLIGHT_UNITED",
+                            "Read the flights that were created (United Airlines)",
+                            new StepRequest("GET", "/flights/search?airlineName=United%20Airlines"),
+                            new StepOptions(true, true, true, false, 10),
+                            new StepExpected(200, (jo) -> {
+                                var failed = false;
+
+                                if (jo.getJSONArray("items") == null) {
+                                    failed = true;
+                                } else {
+                                    var items = jo.getJSONArray("items");
+                                    failed = items.length() != 3;
+                                    if (!failed) {
+                                        failed = !items.getJSONObject(0)
+                                                       .getString("flightNumber")
+                                                       .equals("UA001") && items.getJSONObject(1)
+                                                                                .getString("flightNumber")
+                                                                                .equals("UA002") && items.getJSONObject(
+                                                2).getString("flightNumber").equals("UA003");
+
+                                    }
+                                }
+
+                                return failed ? new Exception("""
+                                                                      Expected Result:
+                                                                      { items: [
+                                                                          { id, flightNumber: UA001, ...  },
+                                                                          { id, flightNumber: UA002, ...  },
+                                                                          { id, flightNumber: UA003, ...  },
+                                                                        ] }
+                                                                      """) : null;
+                            }
+                            )
+                )
+        );
+
     }
 }
