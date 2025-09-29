@@ -108,6 +108,9 @@ public class Main {
         System.out.printf("  Total Groups: %d\n", totalGroups);
         System.out.printf("  Total Succeeded: %d of %d\n", totalSuccess, totalSuccess + totalFailure);
         System.out.printf("  FINAL SCORE: %f\n", finalScore);
+        System.out.println();
+        System.out.println(" (Must-Have Max Score = 1.5)");
+        System.out.println(" (Nice-To-Have Max Score = 1)");
         System.out.println("====================================");
         System.out.println();
     }
