@@ -1,0 +1,19 @@
+{
+  "name": "week07-api",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@koa/router": "^14.0.0",
+    "jsonwebtoken": "^9.0.2",
+    "koa": "^3.0.1",
+    "koa-bodyparser": "^4.4.1",
+    "koa-error": "^3.2.0"
+  }
+}
