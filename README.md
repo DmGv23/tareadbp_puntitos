@@ -142,9 +142,10 @@ The tester will wait 10 seconds, and then call GET /flights/search to verify if 
 
 Must-Have (+0.5)
 
-- Mandatory Fields: Customer, Flight, Booking Date, Customer First Name, Customer Last Name
+- Mandatory Input: Flight Id
+- The rest of the fields must be calculated: Customer Id, Customer First Name, Customer Last Name, Booking Date
 - The flights cannot be oversold.
-- There must be a GET endpoint by the bookingId, that must return all the data that was registered before.
+- There must be a `GET /flight/book/{id}` endpoint that must the booking information.
 
 Nice-To-Have (+0.2)
 

@@ -59,7 +59,7 @@ public class StepsInitializer {
         var group = addGroup("CREATE_FLIGHT", 0.2, true);
 
         addStep(group.getName(),
-                Step.create("MANDATORY_FIELDS",
+                Step.create("FLIGHT_MANDATORY_FIELDS",
                             "Test Mandatory Fields",
                             "Test if all mandatory fields are validated (airlineName, flightNumber, estDepartureTime, estArrivalTime, availableSeats)",
                             new StepRequest("POST", urlPath, "{}"),
@@ -174,7 +174,7 @@ public class StepsInitializer {
         var group = addGroup("REGISTER_USER", 0.2, true);
 
         addStep(group.getName(),
-                Step.create("MANDATORY_FIELDS",
+                Step.create("REGISTER_MANDATORY_FIELDS",
                             "Test Mandatory Fields",
                             "Test if all mandatory fields are validated (firstName, lastName, email, password)",
                             new StepRequest("POST", urlPath, "{}"),
@@ -273,7 +273,7 @@ public class StepsInitializer {
         var group = addGroup("AUTH_LOGIN", 0.2, true);
 
         addStep(group.getName(),
-                Step.create("MANDATORY_FIELDS",
+                Step.create("LOGIN_MANDATORY_FIELDS",
                             "Test Mandatory Fields",
                             "Test if all mandatory fields are validated (email, password)",
                             new StepRequest("POST",
@@ -430,7 +430,6 @@ public class StepsInitializer {
 
     private void addGroupBookFlight() {
         var bookPath = "/flights/book";
-        var readPath = "/flights/book";
 
         var group = addGroup("BOOK_FLIGHT", 0.5, true);
 
@@ -460,15 +459,21 @@ public class StepsInitializer {
                                                     "TEST_SUCCESS_BOOK_FLIGHT_AA448").getResponseJSON().getString("id"),
                                             ""
                             ),
-                            new StepOptions(true, true, true),
+                            new StepOptions(true, true, false),
                             new StepExpected(200, (jo) -> {
-                                if (Stream.of(jo.get("id"),
-                                              jo.get("bookingDate"),
-                                              jo.get("flightId"),
-                                              jo.get("customerId"),
-                                              jo.get("customerFirstName"),
-                                              jo.get("customerLastName")
-                                ).anyMatch(Objects::isNull)) {
+                                if (!Stream.of(jo.has("id"),
+                                               jo.has("bookingDate"),
+                                               jo.has("flightId"),
+                                               jo.has("customerId"),
+                                               jo.has("customerFirstName"),
+                                               jo.has("customerLastName")
+                                ).allMatch(x -> x) || !Stream.of(jo.get("id"),
+                                                                 jo.get("bookingDate"),
+                                                                 jo.get("flightId"),
+                                                                 jo.get("customerId"),
+                                                                 jo.get("customerFirstName"),
+                                                                 jo.get("customerLastName")
+                                ).allMatch(Objects::nonNull)) {
                                     return new Exception(
                                             "Expected Result: { id, bookingDate, flightId, customerId, customerFirstName, customerLastName }");
                                 }
@@ -476,6 +481,23 @@ public class StepsInitializer {
                                 return null;
                             }
                             )
+                )
+        );
+
+        addStep(group.getName(),
+                Step.create("TEST_OVERBOOK_FLIGHT_AA448",
+                            "Test overbooking on flight AA448",
+                            "Test overbooking on flight AA448",
+                            new StepRequest("POST",
+                                            bookPath,
+                                            (responses) -> new JSONObject().put("flightId",
+                                                                                responses.get("TEST_SUCCESS_AA448")
+                                                                                         .getResponseJSON()
+                                                                                         .getString("id")
+                                            )
+                            ),
+                            new StepOptions(true, true, true),
+                            new StepExpected(400)
                 )
         );
     }

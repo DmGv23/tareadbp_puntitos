@@ -13,7 +13,7 @@ public class MockUtils {
                                .put("flightNumber", flightNumber)
                                .put("estDepartureTime", DateUtils.newDateFromToday(addDepartureDays, setDepartureTime))
                                .put("estArrivalTime", DateUtils.newDateFromToday(addArrivalDays, setArrivalTime))
-                               .put("availableSeats", 3);
+                               .put("availableSeats", 1);
     }
 
     public static JSONObject mockUser(String firstName, String lastName, String email, String password) {
