@@ -1,8 +1,11 @@
 package utec.apitester;
 
 import org.json.JSONObject;
+import utec.apitester.utils.DateUtils;
 import utec.apitester.utils.MockUtils;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -18,7 +21,9 @@ public class StepsInitializer {
         addGroupRegisterUser();
         addGroupAuthToken();
         addGroupSearchFlight();
+        addGroupSearchFlightNiceToHave();
         addGroupBookFlight();
+        addGroupBookFlightNiceToHave();
         return stepGroups;
     }
 
@@ -160,6 +165,18 @@ public class StepsInitializer {
         addStep(group.getName(),
                 Step.create("TEST_SUCCESS_DL116",
                             "Test Successful Call",
+                            "Test if the flight can be created. Expected Response: { id: \"new id\" }",
+                            new StepRequest("POST", urlPath, jo.toString()),
+                            new StepOptions(true, false, false, true),
+                            new StepExpected(201, getExpectOneFieldLambda("id"))
+
+                )
+        );
+
+        jo = MockUtils.mockFlight("Spirit Airlines", "NK962", -5, 800, -5, 1900);
+        addStep(group.getName(),
+                Step.create("TEST_SUCCESS_PAST_NK962",
+                            "Test successful call to create past flight NK962",
                             "Test if the flight can be created. Expected Response: { id: \"new id\" }",
                             new StepRequest("POST", urlPath, jo.toString()),
                             new StepOptions(true, false, false, true),
@@ -428,6 +445,69 @@ public class StepsInitializer {
         );
     }
 
+    private void addGroupSearchFlightNiceToHave() {
+        var urlPath = "/flights/search";
+        var group = addGroup("SEARCH_FLIGHT_NICE_TO_HAVE", 0.2, false);
+
+        Function<String, Function<JSONObject, Exception>> validator = (String flightNumber) -> {
+            return (JSONObject jo) -> {
+                var failed = false;
+
+                if (jo.getJSONArray("items") == null) {
+                    failed = true;
+                } else {
+                    var items = jo.getJSONArray("items");
+                    failed = items.length() != 1;
+                    if (!failed) {
+                        var item = items.getJSONObject(0);
+                        failed = item.get("id") == null;
+                        if (!failed) {
+                            failed = !item.get("flightNumber").equals(flightNumber);
+                        }
+                    }
+                }
+
+                return failed ? new Exception(String.format("""
+                                                                    Expected Result:
+                                                                    { items: [ { flightNumber: %s, ...  } ] }
+                                                                    """, flightNumber
+                )) : null;
+            };
+        };
+
+        var dateFrom = DateUtils.newDateFromToday(8, 700);
+        addStep(group.getName(),
+                // THIS IS THE LATEST FLIGHT
+                Step.create("DEPARTURE_DATE_FROM_TARGET_DL116",
+                            "Search flight by departure date from",
+                            "Search flight by departure date from",
+                            new StepRequest("GET",
+                                            urlPath + "?departureDateFrom=" + URLEncoder.encode(DateUtils.toISO(dateFrom),
+                                                                                                StandardCharsets.UTF_8
+                                            )
+                            ),
+                            new StepOptions(true, true, true),
+                            new StepExpected(200, validator.apply("DL116"))
+                )
+        );
+
+        var dateTo = DateUtils.newDateFromToday(0, 0);
+        addStep(group.getName(),
+                // THIS IS THE EARLIEST FLIGHT
+                Step.create("DEPARTURE_DATE_TO_TARGET_NK962",
+                            "Search flight by departure date to",
+                            "Search flight by departure date to",
+                            new StepRequest("GET",
+                                            urlPath + "?departureDateTo=" + URLEncoder.encode(DateUtils.toISO(dateTo),
+                                                                                              StandardCharsets.UTF_8
+                                            )
+                            ),
+                            new StepOptions(true, true, true),
+                            new StepExpected(200, validator.apply("NK962"))
+                )
+        );
+    }
+
     private void addGroupBookFlight() {
         var bookPath = "/flights/book";
 
@@ -492,6 +572,29 @@ public class StepsInitializer {
                                             bookPath,
                                             (responses) -> new JSONObject().put("flightId",
                                                                                 responses.get("TEST_SUCCESS_AA448")
+                                                                                         .getResponseJSON()
+                                                                                         .getString("id")
+                                            )
+                            ),
+                            new StepOptions(true, true, true),
+                            new StepExpected(400)
+                )
+        );
+    }
+
+    private void addGroupBookFlightNiceToHave() {
+        var bookPath = "/flights/book";
+
+        var group = addGroup("BOOK_FLIGHT_NICE_TO_HAVE", 0.2, false);
+
+        addStep(group.getName(),
+                Step.create("TEST_CANNOT_BOOK_FLIGHT_PAST_NK962",
+                            "Test cannot book past flight NK962",
+                            "Test cannot book past flight NK962",
+                            new StepRequest("POST",
+                                            bookPath,
+                                            (responses) -> new JSONObject().put("flightId",
+                                                                                responses.get("TEST_SUCCESS_PAST_NK962")
                                                                                          .getResponseJSON()
                                                                                          .getString("id")
                                             )

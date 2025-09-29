@@ -44,7 +44,7 @@ public class StepGroup {
         return String.format("[%s/%s] %s",
                              this.getName(),
                              this.isMustHave() ? "MUST-HAVE" : "NICE-TO-HAVE",
-                             step.getTitle()
+                             step.getName()
         );
     }
 }

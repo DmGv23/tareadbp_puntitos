@@ -1,5 +1,7 @@
 package utec.apitester.utils;
 
+import java.time.Instant;
+import java.time.format.DateTimeFormatter;
 import java.util.Calendar;
 import java.util.Date;
 
@@ -22,5 +24,10 @@ public class DateUtils {
         }
 
         return cal.getTime();
+    }
+
+    public static String toISO(Date date) {
+        Instant instant = date.toInstant();
+        return DateTimeFormatter.ISO_INSTANT.format(instant);
     }
 }

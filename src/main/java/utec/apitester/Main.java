@@ -86,9 +86,9 @@ public class Main {
             if (groupFailure == 0) {
                 var groupScore = stepGroup.getScore();
                 finalScore += groupScore;
-                System.out.printf("SCORE WON PER GROUP: %f\n", groupScore);
+                System.out.printf("POINTS WON: %f\n", groupScore);
             } else {
-                System.out.println("SCORE WON PER GROUP: 0.0");
+                System.out.println("POINTS WON: 0.0");
             }
 
             totalSuccess += groupSuccess;
