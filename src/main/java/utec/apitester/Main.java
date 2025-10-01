@@ -9,7 +9,6 @@ import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Stream;
 
 public class Main {
     private final Logger logger = LoggerFactory.getLogger(Main.class);
@@ -31,16 +30,19 @@ public class Main {
         caller.httpAny("DELETE", "/cleanup", "");
         logger.info("🧹 Cleaned");
 
-        int totalGroups = 0;
-        int totalSuccess = 0;
-        int totalFailure = 0;
         var executor = new StepExecutor(baseUrl);
-        Double finalScore = 0D;
+        int totalMustHaveGroups = 0;
+        int totalNiceHaveGroups = 0;
+        double theoreticalMaxMustHaveScore = 0;
+        double theoreticalMaxNiceHaveScore = 0;
         var responses = new HashMap<String, StepResponse>();
         for (Map.Entry<String, StepGroup> entryGroup : this.stepGroups.entrySet()) {
-            int groupSuccess = 0;
-            int groupFailure = 0;
             var stepGroup = entryGroup.getValue();
+            if (stepGroup.isMustHave()) {
+                theoreticalMaxMustHaveScore += stepGroup.getScore();
+            } else {
+                theoreticalMaxNiceHaveScore += stepGroup.getScore();
+            }
 
             var canRunGroup = stepGroup.isMustHave() || this.includeNiceToHave;
             if (!canRunGroup) {
@@ -48,22 +50,70 @@ public class Main {
                 continue;
             } else {
                 System.out.println();
-                PrintUtils.groupStart(stepGroup.getName());
+                PrintUtils.groupStart(stepGroup.getName(), stepGroup.getScore());
             }
 
-            totalGroups++;
+            if (stepGroup.isMustHave()) {
+                totalMustHaveGroups++;
+            } else {
+                totalNiceHaveGroups++;
+            }
 
             // begin steps
             for (Map.Entry<String, Step> entryStep : stepGroup.getSteps().entrySet()) {
                 var step = entryStep.getValue();
 
-                var stepResponse = executor.execute(step, responses);
-
-                if (!stepResponse.isSuccess()) {
-                    groupFailure++;
+                StepResponse stepResponse;
+                if (!stepGroup.isCustom()) {
+                    stepResponse = executor.execute(step, responses);
+                    if (step.getName().equals("LOGIN_SUCCESS")) {
+                        if (!stepResponse.isSuccess()) {
+                            System.out.printf("💀 LOGIN_SUCCESS test failed (%s).\n Program will be terminated.",
+                                              stepResponse.getException().getMessage()
+                            );
+                            System.exit(1);
+                        }
+                    }
                 } else {
-                    groupSuccess++;
+                    var bookingInfo = responses.get("READ_SUCCESS_BOOK_FLIGHT_AA448").getResponseJSON();
 
+                    var emailPath = Paths.get(String.format("flight_booking_email_%s.txt",
+                                                            bookingInfo.getString("id")
+                    ));
+                    System.out.printf("Expected Path: %s\n", emailPath.toAbsolutePath());
+                    stepResponse = new StepResponse();
+                    if (!Files.exists(emailPath)) {
+                        stepResponse.setException(new Exception("File not found"));
+                    } else {
+                        String content = Files.readString(emailPath);
+
+                        // force all results to show
+                        String[] requiredFields = new String[]{"bookingDate", "customerFirstName", "customerLastName", "flightNumber", "estDepartureTime", "estArrivalTime"};
+
+                        StringBuilder log = new StringBuilder();
+                        var notFound = 0;
+                        for (String f : requiredFields) {
+                            var value = bookingInfo.getString(f);
+                            if (content.contains(value)) {
+                                log.append(String.format("➕ Found %s: %s\n", f, value));
+                            } else {
+                                notFound++;
+                                log.append(String.format("➖ Not Found %s: %s\n", f, value));
+                            }
+                        }
+
+                        if (notFound == 0) {
+                            stepResponse.setSuccess();
+                            stepResponse.setResponseString(log.toString());
+                        } else {
+                            stepResponse.setException(new Exception("Some fields were not found in the email content"));
+                            stepResponse.setResponseString(log.toString());
+                        }
+                    }
+                }
+
+                stepGroup.countUpStep(stepResponse.isSuccess());
+                if (stepResponse.isSuccess()) {
                     if (step.getOptions().saveResponse()) {
                         responses.put(step.getName(), stepResponse);
                     }
@@ -78,14 +128,10 @@ public class Main {
             }
             // end steps
 
+            var isGroupSuccess = stepGroup.getStepFailureCount() == 0;
             var groupScore = stepGroup.getScore();
-            PrintUtils.groupEnd(groupSuccess, groupFailure, groupScore);
-            if (groupFailure == 0) {
-                finalScore += groupScore;
-            }
-
-            totalSuccess += groupSuccess;
-            totalFailure += groupFailure;
+            stepGroup.setGroupResult(isGroupSuccess);
+            PrintUtils.groupEnd(stepGroup.getStepSuccessCount(), stepGroup.getStepFailureCount(), groupScore);
 
             if (this.stepped) {
                 System.out.println("⌨️ (Stepped Mode) Press Enter to continue ...");
@@ -93,62 +139,41 @@ public class Main {
             }
         }
 
-        // special case for email
-        if (this.includeNiceToHave) {
-            System.out.println();
-            PrintUtils.groupStart("Special Case: Review Email Notification");
-            totalGroups++;
+        var totalMustHaveSuccess = 0;
+        var totalNiceHaveSuccess = 0;
+        var totalMustHaveFail = 0;
+        var totalNiceHaveFail = 0;
+        var totalMustHaveScore = 0D;
+        var totalNiceHaveScore = 0D;
 
-            var bookingInfo = responses.get("READ_SUCCESS_BOOK_FLIGHT_AA448").getResponseJSON();
-
-            var emailPath = Paths.get(String.format("flight_booking_email_%s.txt", bookingInfo.getString("id")));
-            System.out.printf("Expected Path: %s\n", emailPath.toAbsolutePath());
-
-            boolean success = true;
-            String reason = "";
-            if (!Files.exists(emailPath)) {
-                reason = "File not found";
-                success = false;
-            } else {
-                String content = Files.readString(emailPath);
-
-                // force all results to show
-                var results = Stream.of("bookingDate",
-                                        "customerFirstName",
-                                        "customerLastName",
-                                        "flightNumber",
-                                        "estDepartureTime",
-                                        "estArrivalTime"
-                ).map(f -> {
-                    var value = bookingInfo.getString(f);
-                    if (content.contains(value)) {
-                        System.out.printf("➕ Found %s: %s\n", f, value);
-                        return true;
-                    } else {
-                        System.out.printf("➖ Not Found %s: %s\n", f, value);
-                        return false;
-                    }
-                }).toList();
-
-                // reduce it
-                success = results.stream().allMatch(b -> b);
-
-                if (!success) {
-                    reason = "Some fields were not found in the email content";
+        for (Map.Entry<String, StepGroup> entryGroup : stepGroups.entrySet()) {
+            var stepGroup = entryGroup.getValue();
+            if (stepGroup.getGroupResult()) {
+                if (stepGroup.isMustHave()) {
+                    totalMustHaveSuccess += stepGroup.getStepSuccessCount();
+                    totalMustHaveScore += stepGroup.getScore();
+                } else {
+                    totalNiceHaveSuccess += stepGroup.getStepSuccessCount();
+                    totalNiceHaveScore += stepGroup.getScore();
                 }
-            }
-
-            System.out.println();
-            double groupScore = 0.2;
-            PrintUtils.groupEnd(success ? 1 : 0, !success ? 1 : 0, groupScore);
-            if (success) {
-                totalSuccess++;
-                finalScore += groupScore;
             } else {
-                totalFailure++;
+                if (stepGroup.isMustHave()) {
+                    totalMustHaveFail += stepGroup.getStepFailureCount();
+                } else {
+                    totalNiceHaveFail += stepGroup.getStepFailureCount();
+                }
             }
         }
 
-        PrintUtils.grandTotal(totalGroups, totalSuccess, totalFailure, finalScore);
+        PrintUtils.grandTotal(totalMustHaveGroups, totalNiceHaveGroups,
+
+                              totalMustHaveSuccess, totalMustHaveFail,
+
+                              totalNiceHaveSuccess, totalNiceHaveFail,
+
+                              totalMustHaveScore, totalNiceHaveScore,
+
+                              theoreticalMaxMustHaveScore, theoreticalMaxNiceHaveScore
+        );
     }
 }

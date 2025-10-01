@@ -79,11 +79,16 @@ Must-Have (+0.2)
 - Last Name must be at least 1 alpha upper case character (A-Z)
 - Password must be at least 8 characters long, with at least one letter and one number.
 
-3. (Must-Have) The customer then must acquire an authentication token. (+0.2)
+Nice-To-Have (+0.2)
+
+- The response should only be `{ id }` (using DTO).
+
+3. (Must-Have) The customer then must acquire an authentication token. (+0.5)
 
 - Email and password are mandatory
 - Must validate for unknown email
 - Must validate for wrong password
+- Token must be in JWT format
 
 ```java
 // required mapping
@@ -93,6 +98,12 @@ class AuthController {
     @PostMapping("/login")
     public ResponseEntity<AuthToken> login(@RequestBody LoginDTO login) {}
 }
+```
+
+The response should be:
+
+```
+  { token: "<jwt>" }
 ```
 
 - All operations related to the customer must receive this authentication token so the API can tell who is calling it.
@@ -179,6 +190,7 @@ class FlightController {
 
 **INSTRUCTIONS**
 
+- You must use **events**.
 - Save a file called `flight_booking_email_${booking_id}.txt` next to where your `week07-tester.jar` is located.
 - The email must contain:
     - Customer First Name
