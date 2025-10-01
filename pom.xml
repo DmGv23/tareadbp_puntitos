@@ -41,6 +41,12 @@
             <artifactId>json</artifactId>
             <version>20250517</version>
         </dependency>
+
+        <dependency>
+            <groupId>com.auth0</groupId>
+            <artifactId>java-jwt</artifactId>
+            <version>4.5.0</version>
+        </dependency>
     </dependencies>
 
     <build>
@@ -104,6 +110,7 @@
                         <argument>test</argument>
                         <argument>-u</argument>
                         <argument>http://localhost:8080</argument>
+                        <argument>-n</argument>
                     </arguments>
                 </configuration>
             </plugin>

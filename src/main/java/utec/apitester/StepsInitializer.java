@@ -1,5 +1,6 @@
 package utec.apitester;
 
+import com.auth0.jwt.JWT;
 import org.json.JSONObject;
 import utec.apitester.utils.DateUtils;
 import utec.apitester.utils.MockUtils;
@@ -22,6 +23,7 @@ public class StepsInitializer {
         stepGroups.clear();
         addGroupCreateFlight();
         addGroupRegisterUser();
+        addGroupRegisterUserNiceToHave();
         addGroupAuthToken();
         addGroupSearchFlight();
         addGroupSearchFlightNiceToHave();
@@ -30,6 +32,19 @@ public class StepsInitializer {
 
         // always add to the end
         addGroupCreateManyFlightNiceToHave();
+
+        // add special case for email verification
+        var g = addGroup("REVIEW_EMAIL_NOTIFICATION", 0.2, false);
+        g.setAsCustom();
+
+        var s = Step.create("TEST_EMAIL_SENT",
+                            "Verifies if an email was sent when a flight was booked (simulated: write a file)",
+                            null,
+                            new StepOptions(false, true),
+                            null
+        );
+        addStep(g.getName(), s);
+
         return stepGroups;
     }
 
@@ -45,9 +60,19 @@ public class StepsInitializer {
     }
 
     private Function<JSONObject, Exception> getExpectOneFieldLambda(String fieldName) {
+        return getExpectOneFieldLambda(fieldName, false);
+    }
+
+    private Function<JSONObject, Exception> getExpectOneFieldLambda(String fieldName, Boolean strict) {
         return (jo) -> {
             if (jo.get(fieldName) == null) {
-                return new Exception("Expected Response: { id: \"new id\" }");
+                return new Exception(String.format("Expected Response: { %s: \"value\" }", fieldName));
+            }
+
+            if (strict) {
+                if (jo.keySet().size() > 1) {
+                    return new Exception(String.format("Expected Only One Field: { %s: \"value\" }", fieldName));
+                }
             }
 
             return null;
@@ -275,9 +300,26 @@ public class StepsInitializer {
         );
     }
 
+    private void addGroupRegisterUserNiceToHave() {
+        var urlPath = "/users/register";
+        var group = addGroup("REGISTER_USER_NICE_TO_HAVE", 0.2, false);
+
+        addStep(group.getName(),
+                Step.create("TEST_SUCCESS_MARY_KAY_DTO",
+                            "Test if the user can be registered and only the ID comes in (DTO)",
+                            new StepRequest("POST",
+                                            urlPath,
+                                            MockUtils.mockUser("Mary", "Kay", "mary@gmail.com", "1234DEFG").toString()
+                            ),
+                            new StepOptions(false, true, true),
+                            new StepExpected(201, getExpectOneFieldLambda("id", true))
+                )
+        );
+    }
+
     private void addGroupAuthToken() {
         var urlPath = "/auth/login";
-        var group = addGroup("AUTH_LOGIN", 0.2, true);
+        var group = addGroup("AUTH_LOGIN", 0.5, true);
 
         addStep(group.getName(),
                 Step.create("LOGIN_MANDATORY_FIELDS",
@@ -332,7 +374,21 @@ public class StepsInitializer {
                                                             .toString()
                             ),
                             new StepOptions(false, true, true),
-                            new StepExpected(200, getExpectOneFieldLambda("token"))
+                            new StepExpected(200, jo -> {
+                                var result = getExpectOneFieldLambda("token", true).apply(jo);
+                                if (result != null) {
+                                    return result;
+                                }
+
+                                var jwt = new JWT();
+                                try {
+                                    jwt.decodeJwt(jo.getString("token"));
+                                } catch (Exception e) {
+                                    return new Exception("Invalid jwt token");
+                                }
+                                return null;
+                            }
+                            )
                 )
         );
     }
@@ -638,7 +694,7 @@ public class StepsInitializer {
                 Step.create("READ_MANY_FLIGHT_UNITED",
                             "Read the flights that were created (United Airlines)",
                             new StepRequest("GET", "/flights/search?airlineName=United%20Airlines"),
-                            new StepOptions(true, true, false, 10),
+                            new StepOptions(true, true, false, 5),
                             new StepExpected(200, (jo) -> {
                                 var failed = false;
 
