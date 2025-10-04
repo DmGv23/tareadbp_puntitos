@@ -77,9 +77,7 @@ public class Main {
                 } else {
                     var bookingInfo = responses.get("READ_SUCCESS_BOOK_FLIGHT_AA448").getResponseJSON();
 
-                    var emailPath = Paths.get(String.format("flight_booking_email_%s.txt",
-                                                            bookingInfo.getString("id")
-                    ));
+                    var emailPath = Paths.get(String.format("flight_booking_email_%s.txt", bookingInfo.get("id")));
                     System.out.printf("Expected Path: %s\n", emailPath.toAbsolutePath());
                     stepResponse = new StepResponse();
                     if (!Files.exists(emailPath)) {
@@ -93,7 +91,7 @@ public class Main {
                         StringBuilder log = new StringBuilder();
                         var notFound = 0;
                         for (String f : requiredFields) {
-                            var value = bookingInfo.getString(f);
+                            var value = bookingInfo.get(f).toString();
                             if (content.contains(value)) {
                                 log.append(String.format("➕ Found %s: %s\n", f, value));
                             } else {

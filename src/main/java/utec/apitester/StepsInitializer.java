@@ -557,7 +557,7 @@ public class StepsInitializer {
                                             (responses) -> new JSONObject().put("flightId",
                                                                                 responses.get("TEST_SUCCESS_AA448")
                                                                                          .getResponseJSON()
-                                                                                         .getString("id")
+                                                                                         .get("id")
                                             )
                             ),
                             new StepOptions(true, true, true),
@@ -570,7 +570,7 @@ public class StepsInitializer {
                             "Read successful booking on flight AA448 by John Doe",
                             new StepRequest("GET",
                                             (responses) -> "/flights/book/" + responses.get(
-                                                    "TEST_SUCCESS_BOOK_FLIGHT_AA448").getResponseJSON().getString("id"),
+                                                    "TEST_SUCCESS_BOOK_FLIGHT_AA448").getResponseJSON().get("id"),
                                             ""
                             ),
                             new StepOptions(true, false, true),
@@ -586,7 +586,7 @@ public class StepsInitializer {
                                                "estArrivalTime"
                                 ).allMatch(f -> jo.has(f) && jo.get(f) != null)) {
                                     return new Exception(
-                                            "Expected Result: { id, bookingDate, flightId, flightNumber, customerId, customerFirstName, customerLastName }");
+                                            "Expected Result: { id, bookingDate, flightId, flightNumber, customerId, customerFirstName, customerLastName, estDepartureTime, estArrivalTime }");
                                 }
 
                                 return null;
@@ -603,7 +603,7 @@ public class StepsInitializer {
                                             (responses) -> new JSONObject().put("flightId",
                                                                                 responses.get("TEST_SUCCESS_AA448")
                                                                                          .getResponseJSON()
-                                                                                         .getString("id")
+                                                                                         .get("id")
                                             )
                             ),
                             new StepOptions(true, true),
@@ -625,7 +625,7 @@ public class StepsInitializer {
                                             (responses) -> new JSONObject().put("flightId",
                                                                                 responses.get("TEST_SUCCESS_PAST_NK962")
                                                                                          .getResponseJSON()
-                                                                                         .getString("id")
+                                                                                         .get("id")
                                             )
                             ),
                             new StepOptions(true, true),
@@ -642,7 +642,7 @@ public class StepsInitializer {
                                             (responses) -> new JSONObject().put("flightId",
                                                                                 responses.get("TEST_SUCCESS_LA876")
                                                                                          .getResponseJSON()
-                                                                                         .getString("id")
+                                                                                         .get("id")
                                             )
                             ),
                             new StepOptions(true, true),
