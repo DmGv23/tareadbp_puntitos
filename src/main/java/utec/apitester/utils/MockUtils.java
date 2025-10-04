@@ -11,8 +11,12 @@ public class MockUtils {
                                         Integer setDepartureTime, Integer addArrivalDays, Integer setArrivalTime) {
         return new JSONObject().put("airlineName", airlineName)
                                .put("flightNumber", flightNumber)
-                               .put("estDepartureTime", DateUtils.newDateFromToday(addDepartureDays, setDepartureTime))
-                               .put("estArrivalTime", DateUtils.newDateFromToday(addArrivalDays, setArrivalTime))
+                               .put("estDepartureTime",
+                                    DateUtils.toISO(DateUtils.newDateFromToday(addDepartureDays, setDepartureTime))
+                               )
+                               .put("estArrivalTime",
+                                    DateUtils.toISO(DateUtils.newDateFromToday(addArrivalDays, setArrivalTime))
+                               )
                                .put("availableSeats", 1);
     }
 
